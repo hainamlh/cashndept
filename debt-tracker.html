@@ -709,9 +709,10 @@
     .metric-label { font-size: 9px; margin-bottom: 3px; }
     .metric-sub { font-size: 10px; }
     .card-item { padding: 0.8rem; border-radius: 10px; }
-    .card-amount { font-size: 15px; }
-    .bank-avatar { width: 30px; height: 30px; font-size: 10px; border-radius: 6px; }
-    .card-bank { font-size: 13px; }
+    .card-amount { font-size: 20px; }
+    .card-amount-sub { font-size: 12px; }
+    .bank-avatar { width: 34px; height: 34px; font-size: 11px; border-radius: 7px; }
+    .card-bank { font-size: 17px; }
     #apiStatusText { display: none; }
     .mini-input-row { grid-template-columns: 1fr; }
     .upload-zone { padding: 1rem 0.75rem; }
@@ -719,8 +720,16 @@
     .upload-text { font-size: 12px; }
     .upload-hint { font-size: 10px; }
     .thumb { width: 58px; height: 58px; }
-    .adjust-row1 { grid-template-columns: 1fr; gap: 5px; }
-    .adjust-row1 > * { width: 100%; }
+    /* Adjust: hàng 1 ngày+tiền, hàng 2 lý do+nút */
+    .adjust-row1 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 6px;
+    }
+    .adjust-row1 .adj-date { grid-column: 1; grid-row: 1; }
+    .adjust-row1 .adj-amt  { grid-column: 2; grid-row: 1; }
+    .adjust-row1 .adj-note { grid-column: 1 / -1; grid-row: 2; }
+    .adjust-row1 .adj-btn  { grid-column: 1 / -1; grid-row: 3; width: 100%; }
   }
   @media (max-width: 400px) {
     .topbar { padding: 0 0.75rem; }
@@ -1498,7 +1507,7 @@ function renderDashboard() {
   const totalSub = document.getElementById('totalSub');
   if (n) {
     totalEl.textContent = fmtM(total);
-    totalSub.textContent = fmt(total);
+    totalSub.textContent = currency === 'VND' ? fmtUSD_K(total) : fmtVND_M(total);
   } else {
     totalEl.textContent = '—';
     totalSub.textContent = 'Chưa có dữ liệu';
@@ -1623,10 +1632,10 @@ function renderDashboard() {
       <div class="adjust-section" style="margin-top:6px">
         <div class="adjust-title">± Điều chỉnh dư nợ</div>
         <div class="adjust-row1">
-          <input class="adjust-input" id="adj-date-${i}" type="date" value="${new Date().toISOString().split('T')[0]}">
-          <input class="adjust-input" id="adj-amt-${i}" type="text" inputmode="numeric" placeholder="+/- Số tiền (VNĐ)" oninput="fmtInputComma(this)">
-          <input class="adjust-input" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
-          <button class="btn-adjust" onclick="applyAdjust(${i})">Lưu</button>
+          <input class="adjust-input adj-date" id="adj-date-${i}" type="date" value="${new Date().toISOString().split('T')[0]}">
+          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="numeric" placeholder="+/- Số tiền (VNĐ)" oninput="fmtInputComma(this)">
+          <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
+          <button class="btn-adjust adj-btn" onclick="applyAdjust(${i})">Lưu</button>
         </div>
         ${txHtml}
       </div>
