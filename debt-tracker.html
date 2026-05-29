@@ -803,6 +803,26 @@
   </div>
 </div>
 
+<!-- MODAL: SYNC CODE -->
+<div class="modal-overlay" id="syncModal">
+  <div class="modal">
+    <div class="modal-title">☁️ Đồng bộ dữ liệu</div>
+    <div class="modal-sub">Đặt một <b>Mã đồng bộ</b> bất kỳ. Dùng cùng mã trên laptop, PC, điện thoại — tất cả sẽ dùng chung 1 dữ liệu.</div>
+    <div class="input-group">
+      <label class="input-label">Mã đồng bộ (tự đặt)</label>
+      <input class="input-field" id="syncCodeInput" type="text" placeholder="vd: nam2026, mydebt..." autocomplete="off" spellcheck="false" style="font-size:16px;letter-spacing:0.05em">
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);line-height:1.7">
+      ⚠️ Ai biết mã này đều xem được dữ liệu của bạn. Dùng mã đủ khó đoán.<br>
+      Đổi mã = mất liên kết với dữ liệu cũ trên cloud.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeSyncModal()">Hủy</button>
+      <button class="btn-modal-save" onclick="saveSyncCode()">💾 Lưu & đồng bộ</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: API KEY -->
 <div class="modal-overlay" id="apiModal">
   <div class="modal">
@@ -852,6 +872,11 @@
       </div>
       <!-- Theme Toggle -->
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Chuyển giao diện sáng/tối">☀️</button>
+      <!-- Sync Status -->
+      <div class="api-status" id="syncStatusBtn" onclick="openSyncModal()" title="Đồng bộ cloud">
+        <div class="dot" id="syncDot"></div>
+        <span id="syncStatusText">Chưa đồng bộ</span>
+      </div>
       <!-- API Status -->
       <div class="api-status" id="apiStatusBtn" onclick="openModal()">
         <div class="dot" id="apiDot"></div>
@@ -998,16 +1023,38 @@ const SB_URL  = 'https://qjvkuokbmwhazzlkfikl.supabase.co';
 const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdmt1b2tibXdoYXp6bGtmaWtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTgyNDYsImV4cCI6MjA5NTU5NDI0Nn0.AT-QyWlPnwy32WebC5T5SEJc9t2LVTS4_XMg_yEPFQk';
 const sb      = supabase.createClient(SB_URL, SB_KEY);
 
-// Device ID — mỗi trình duyệt/thiết bị có 1 ID riêng
-function getDeviceId() {
-  let id = localStorage.getItem('debt_tracker_device_id');
-  if (!id) {
-    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem('debt_tracker_device_id', id);
+const SYNC_CODE_KEY = 'debt_tracker_sync_code';
+let syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
+
+function updateSyncStatus() {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncStatusText');
+  if (syncCode) {
+    dot.className = 'dot ok';
+    txt.textContent = '☁ ' + syncCode;
+  } else {
+    dot.className = 'dot';
+    txt.textContent = 'Chưa đồng bộ';
   }
-  return id;
 }
-const DEVICE_ID = getDeviceId();
+function openSyncModal() {
+  document.getElementById('syncCodeInput').value = syncCode;
+  document.getElementById('syncModal').classList.add('open');
+}
+function closeSyncModal() { document.getElementById('syncModal').classList.remove('open'); }
+async function saveSyncCode() {
+  const val = document.getElementById('syncCodeInput').value.trim();
+  if (!val) { showToast('Vui lòng nhập mã đồng bộ', 'error'); return; }
+  syncCode = val;
+  localStorage.setItem(SYNC_CODE_KEY, syncCode);
+  updateSyncStatus();
+  closeSyncModal();
+  showToast('⏳ Đang tải dữ liệu từ cloud...', '');
+  await loadState();
+}
+document.getElementById('syncModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSyncModal();
+});
 
 // ══ STATE ════════════════════════════════════════════════════
 const state = {
@@ -1156,86 +1203,94 @@ function bankLogoUrl(domain) {
 let _saveTimer = null;
 
 function saveState() {
-  // Local cache ngay lập tức
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, savedAt: new Date().toISOString() }));
   } catch(e) {}
-  // Supabase debounce 800ms
+  if (!syncCode) return;
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(saveToSupabase, 800);
 }
 
 async function saveToSupabase() {
+  if (!syncCode) return;
   try {
-    const rows = state.cards.map(c => ({
-      device_id:    DEVICE_ID,
-      bank:         c.bank || '',
-      amount:       c.amount || 0,
-      due_date:     c.dueDate   || null,
-      card_type:    c.cardType  || null,
-      min_payment:  c.minPayment || null,
-      note:         c.note      || null,
-      transactions: c.transactions || [],
-      card_key:     c._key || (c._key = c.bank + '_' + (c._createdAt || (c._createdAt = Date.now()))),
-    }));
+    const rows = state.cards.map(c => {
+      if (!c._key) c._key = c.bank + '_' + (c._createdAt || (c._createdAt = Date.now()));
+      return {
+        sync_code:    syncCode,
+        card_key:     c._key,
+        bank:         c.bank         || '',
+        amount:       c.amount       || 0,
+        due_date:     c.dueDate      || null,
+        card_type:    c.cardType     || null,
+        min_payment:  c.minPayment   || null,
+        note:         c.note         || null,
+        transactions: c.transactions || [],
+      };
+    });
 
-    // Upsert toàn bộ (dùng card_key làm conflict key)
-    const { error } = await sb.from('debt_cards').upsert(rows, { onConflict: 'device_id,card_key' });
-    if (error) console.warn('Supabase save:', error.message);
-
-    // Xóa các thẻ đã bị xóa khỏi Supabase
-    const activeKeys = rows.map(r => r.card_key);
-    if (activeKeys.length) {
-      await sb.from('debt_cards')
-        .delete()
-        .eq('device_id', DEVICE_ID)
-        .not('card_key', 'in', `(${activeKeys.map(k => `"${k}"`).join(',')})`);
-    } else {
-      await sb.from('debt_cards').delete().eq('device_id', DEVICE_ID);
+    // Xóa hết rồi insert lại (đơn giản, an toàn)
+    await sb.from('debt_cards').delete().eq('sync_code', syncCode);
+    if (rows.length) {
+      const { error } = await sb.from('debt_cards').insert(rows);
+      if (error) console.warn('Supabase save:', error.message);
     }
   } catch(e) { console.warn('Supabase error:', e.message); }
 }
 
 async function loadState() {
-  // Thử load từ Supabase trước
-  try {
-    const { data, error } = await sb.from('debt_cards')
-      .select('*')
-      .eq('device_id', DEVICE_ID)
-      .order('amount', { ascending: false });
+  if (syncCode) {
+    try {
+      const { data, error } = await sb.from('debt_cards')
+        .select('*')
+        .eq('sync_code', syncCode)
+        .order('amount', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      state.cards = data.map(r => ({
-        bank:         r.bank,
-        amount:       r.amount,
-        dueDate:      r.due_date,
-        cardType:     r.card_type,
-        minPayment:   r.min_payment,
-        note:         r.note,
-        transactions: r.transactions || [],
-        _key:         r.card_key,
-        _createdAt:   r.card_key?.split('_').pop(),
-        _style:       getBankStyle(r.bank || ''),
-      }));
-      // Sync lại localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, savedAt: new Date().toISOString() }));
-      renderDashboard();
-      showToast('✓ Đã tải dữ liệu từ cloud', 'success');
-      return;
-    }
-  } catch(e) { console.warn('Supabase load:', e.message); }
+      if (!error && data && data.length > 0) {
+        state.cards = data.map(r => ({
+          bank:         r.bank,
+          amount:       r.amount,
+          dueDate:      r.due_date,
+          cardType:     r.card_type,
+          minPayment:   r.min_payment,
+          note:         r.note,
+          transactions: r.transactions || [],
+          _key:         r.card_key,
+          _style:       getBankStyle(r.bank || ''),
+        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, savedAt: new Date().toISOString() }));
+        renderDashboard();
+        showToast('✓ Đồng bộ thành công · ' + data.length + ' thẻ', 'success');
+        return;
+      } else if (!error && data && data.length === 0) {
+        // Mã đúng nhưng chưa có data — push local lên
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.cards?.length) {
+            state.cards = parsed.cards.map(c => ({ ...c, _style: getBankStyle(c.bank || '') }));
+            renderDashboard();
+            saveToSupabase();
+            showToast('✓ Đã đẩy dữ liệu local lên cloud', 'success');
+            return;
+          }
+        }
+      }
+    } catch(e) { console.warn('Supabase load:', e.message); }
+  }
 
-  // Fallback: localStorage
+  // Fallback localStorage
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
-    if (parsed.cards && Array.isArray(parsed.cards)) {
+    if (parsed.cards?.length) {
       state.cards = parsed.cards.map(c => ({
         ...c,
-        _key: c._key || (c.bank + '_' + (c._createdAt || Date.now())),
-        _style: getBankStyle(c.bank || '')
+        _key: c._key || (c.bank + '_' + Date.now()),
+        _style: getBankStyle(c.bank || ''),
       }));
+      renderDashboard();
     }
   } catch(e) {}
 }
@@ -1769,10 +1824,11 @@ function renderDashboard() {
 initTheme();
 setCurrency(currency);
 updateApiStatus();
-renderDashboard();   // render trống trước
+updateSyncStatus();
+renderDashboard();
 fetchRate();
 attachCommaInputs();
-loadState();         // async: tải Supabase → re-render khi xong
+loadState();
 </script>
 </body>
 </html>
