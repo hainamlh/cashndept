@@ -597,6 +597,22 @@
   }
   .btn-adjust:hover { filter: brightness(1.08); }
 
+  /* Date icon button (mobile only) */
+  .adj-date-btn {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex-shrink: 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 7px; cursor: pointer; font-size: 16px;
+    transition: border-color 0.2s;
+  }
+  .adj-date-btn:hover { border-color: var(--gold); }
+  /* Hidden date input (triggered by icon) */
+  .adj-date-hidden {
+    position: absolute; opacity: 0; pointer-events: none;
+    width: 0; height: 0;
+  }
+
   /* Card restructured: top row (left+right) + full-width adjust below */
   .card-item { flex-direction: column; }
   .card-item-row { display: flex; align-items: flex-start; gap: 1rem; width: 100%; }
@@ -720,16 +736,16 @@
     .upload-text { font-size: 12px; }
     .upload-hint { font-size: 10px; }
     .thumb { width: 58px; height: 58px; }
-    /* Adjust: hàng 1 ngày+tiền, hàng 2 lý do+nút */
+    /* Adjust mobile: 1 hàng — Số tiền | Lý do | 📅 icon */
     .adjust-row1 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
+      grid-template-columns: 1fr 1fr auto auto;
       gap: 6px;
     }
-    .adjust-row1 .adj-date { grid-column: 1; grid-row: 1; }
-    .adjust-row1 .adj-amt  { grid-column: 2; grid-row: 1; }
-    .adjust-row1 .adj-note { grid-column: 1 / -1; grid-row: 2; }
-    .adjust-row1 .adj-btn  { grid-column: 1 / -1; grid-row: 3; width: 100%; }
+    .adjust-row1 .adj-date { display: none; }
+    .adjust-row1 .adj-amt  { grid-column: 1; }
+    .adjust-row1 .adj-note { grid-column: 2; }
+    .adjust-row1 .adj-date-btn { display: flex; }
+    .adjust-row1 .adj-btn  { grid-column: auto; }
   }
   @media (max-width: 400px) {
     .topbar { padding: 0 0.75rem; }
@@ -968,13 +984,30 @@
 
 </div><!-- /page-shell -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ══ CONSTANTS ════════════════════════════════════════════════
-const STORAGE_KEY = 'debt_tracker_v2_state';
+const STORAGE_KEY   = 'debt_tracker_v2_state';
 const API_KEY_STORE = 'debt_tracker_api_key';
-const THEME_KEY = 'debt_tracker_theme';
-const CURRENCY_KEY = 'debt_tracker_currency';
-const RATE_KEY = 'debt_tracker_usd_rate';
+const THEME_KEY     = 'debt_tracker_theme';
+const CURRENCY_KEY  = 'debt_tracker_currency';
+const RATE_KEY      = 'debt_tracker_usd_rate';
+
+// ══ SUPABASE ══════════════════════════════════════════════════
+const SB_URL  = 'https://qjvkuokbmwhazzlkfikl.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdmt1b2tibXdoYXp6bGtmaWtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTgyNDYsImV4cCI6MjA5NTU5NDI0Nn0.AT-QyWlPnwy32WebC5T5SEJc9t2LVTS4_XMg_yEPFQk';
+const sb      = supabase.createClient(SB_URL, SB_KEY);
+
+// Device ID — mỗi trình duyệt/thiết bị có 1 ID riêng
+function getDeviceId() {
+  let id = localStorage.getItem('debt_tracker_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('debt_tracker_device_id', id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
 
 // ══ STATE ════════════════════════════════════════════════════
 const state = {
@@ -1119,16 +1152,80 @@ function bankLogoUrl(domain) {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 }
 
-// ══ PERSISTENCE ══════════════════════════════════════════════
+// ══ PERSISTENCE — Supabase + localStorage fallback ═══════════
+let _saveTimer = null;
+
 function saveState() {
-  const toSave = {
-    cards: state.cards,
-    savedAt: new Date().toISOString()
-  };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); } catch(e) {}
+  // Local cache ngay lập tức
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, savedAt: new Date().toISOString() }));
+  } catch(e) {}
+  // Supabase debounce 800ms
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveToSupabase, 800);
 }
 
-function loadState() {
+async function saveToSupabase() {
+  try {
+    const rows = state.cards.map(c => ({
+      device_id:    DEVICE_ID,
+      bank:         c.bank || '',
+      amount:       c.amount || 0,
+      due_date:     c.dueDate   || null,
+      card_type:    c.cardType  || null,
+      min_payment:  c.minPayment || null,
+      note:         c.note      || null,
+      transactions: c.transactions || [],
+      card_key:     c._key || (c._key = c.bank + '_' + (c._createdAt || (c._createdAt = Date.now()))),
+    }));
+
+    // Upsert toàn bộ (dùng card_key làm conflict key)
+    const { error } = await sb.from('debt_cards').upsert(rows, { onConflict: 'device_id,card_key' });
+    if (error) console.warn('Supabase save:', error.message);
+
+    // Xóa các thẻ đã bị xóa khỏi Supabase
+    const activeKeys = rows.map(r => r.card_key);
+    if (activeKeys.length) {
+      await sb.from('debt_cards')
+        .delete()
+        .eq('device_id', DEVICE_ID)
+        .not('card_key', 'in', `(${activeKeys.map(k => `"${k}"`).join(',')})`);
+    } else {
+      await sb.from('debt_cards').delete().eq('device_id', DEVICE_ID);
+    }
+  } catch(e) { console.warn('Supabase error:', e.message); }
+}
+
+async function loadState() {
+  // Thử load từ Supabase trước
+  try {
+    const { data, error } = await sb.from('debt_cards')
+      .select('*')
+      .eq('device_id', DEVICE_ID)
+      .order('amount', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      state.cards = data.map(r => ({
+        bank:         r.bank,
+        amount:       r.amount,
+        dueDate:      r.due_date,
+        cardType:     r.card_type,
+        minPayment:   r.min_payment,
+        note:         r.note,
+        transactions: r.transactions || [],
+        _key:         r.card_key,
+        _createdAt:   r.card_key?.split('_').pop(),
+        _style:       getBankStyle(r.bank || ''),
+      }));
+      // Sync lại localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, savedAt: new Date().toISOString() }));
+      renderDashboard();
+      showToast('✓ Đã tải dữ liệu từ cloud', 'success');
+      return;
+    }
+  } catch(e) { console.warn('Supabase load:', e.message); }
+
+  // Fallback: localStorage
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
@@ -1136,6 +1233,7 @@ function loadState() {
     if (parsed.cards && Array.isArray(parsed.cards)) {
       state.cards = parsed.cards.map(c => ({
         ...c,
+        _key: c._key || (c.bank + '_' + (c._createdAt || Date.now())),
         _style: getBankStyle(c.bank || '')
       }));
     }
@@ -1451,14 +1549,15 @@ function attachCommaInputs() {
 
 // ══ ADJUST DEBT ══════════════════════════════════════════════
 function applyAdjust(i) {
-  const dateEl = document.getElementById(`adj-date-${i}`);
-  const amtEl  = document.getElementById(`adj-amt-${i}`);
-  const noteEl = document.getElementById(`adj-note-${i}`);
+  const dateEl   = document.getElementById(`adj-date-${i}`);
+  const dateHidden = document.getElementById(`adj-date-hidden-${i}`);
+  const amtEl    = document.getElementById(`adj-amt-${i}`);
+  const noteEl   = document.getElementById(`adj-note-${i}`);
 
   const amount = parseCommaNum(amtEl.value);
   if (!amount || isNaN(amount)) { showToast('Nhập số tiền +/- cần điều chỉnh', 'error'); return; }
 
-  const date = dateEl.value || new Date().toISOString().split('T')[0];
+  const date = dateEl.value || dateHidden?.value || new Date().toISOString().split('T')[0];
   const note = noteEl.value.trim() || '';
 
   const c = state.cards[i];
@@ -1635,6 +1734,8 @@ function renderDashboard() {
           <input class="adjust-input adj-date" id="adj-date-${i}" type="date" value="${new Date().toISOString().split('T')[0]}">
           <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="numeric" placeholder="+/- Số tiền (VNĐ)" oninput="fmtInputComma(this)">
           <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
+          <button class="adj-date-btn" title="Chọn ngày" onclick="document.getElementById('adj-date-hidden-${i}').showPicker?.() || document.getElementById('adj-date-hidden-${i}').click()">📅</button>
+          <input class="adj-date-hidden" id="adj-date-hidden-${i}" type="date" value="${new Date().toISOString().split('T')[0]}" onchange="document.getElementById('adj-date-${i}').value=this.value">
           <button class="btn-adjust adj-btn" onclick="applyAdjust(${i})">Lưu</button>
         </div>
         ${txHtml}
@@ -1667,11 +1768,11 @@ function renderDashboard() {
 // ══ INIT ════════════════════════════════════════════════════
 initTheme();
 setCurrency(currency);
-loadState();
 updateApiStatus();
-renderDashboard();
+renderDashboard();   // render trống trước
 fetchRate();
 attachCommaInputs();
+loadState();         // async: tải Supabase → re-render khi xong
 </script>
 </body>
 </html>
