@@ -1943,27 +1943,39 @@ function tcLoadLocal() {
 }
 
 // ── Sync dot ──
-function tcSetSync(state) {
+let tcLastErr = '';
+function tcSetSync(state, errMsg) {
   document.getElementById('tcSyncDot').className = 'dot ' + (state||'');
+  if (errMsg) tcLastErr = errMsg;
+  document.getElementById('tcSyncDot').title = errMsg || (state === 'ok' ? 'Đã đồng bộ' : '');
 }
 
 // ── Supabase load year ──
 async function tcLoadYear() {
   tcSetSync('spin');
-  const from = `${tcYear}-01`, to = `${tcYear}-12`;
+  // month format: "YYYY-MM" — compare as strings works correctly for same-year range
+  const from = `${tcYear}-01`;
+  const to   = `${tcYear}-12`;
   try {
     const { data, error } = await sb
       .from(TC_TABLE)
       .select('month,thu,chi,note')
       .gte('month', from)
-      .lte('month', to);
+      .lte('month', to)
+      .order('month', { ascending: true });
     if (error) throw error;
-    if (data) data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
-    tcSaveLocal();
+    if (data && data.length > 0) {
+      data.forEach(r => {
+        tcData[r.month] = { thu: r.thu || 0, chi: r.chi || 0, note: r.note || '' };
+      });
+      tcSaveLocal();
+    }
     tcSetSync('ok');
   } catch(e) {
-    console.warn('ThuChi load error:', e?.message||e);
-    tcSetSync('err');
+    const msg = e?.message || String(e);
+    console.warn('ThuChi load error:', msg);
+    tcSetSync('err', msg);
+    showToast('Thu Chi: ' + (msg.includes('relation') ? 'Chưa tạo table thu_chi' : msg.slice(0,60)), 'error');
   }
 }
 
@@ -1972,14 +1984,16 @@ async function tcSaveRecord(key, thu, chi, note) {
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
   try {
-    const { error } = await sb.from(TC_TABLE).upsert(
-      { month: key, thu: thu||0, chi: chi||0, note: note||'' },
-      { onConflict: 'month' }
-    );
+    const { error } = await sb
+      .from(TC_TABLE)
+      .upsert({ month: key, thu: +thu || 0, chi: +chi || 0, note: note || '' }, { onConflict: 'month' });
     if (error) throw error;
+    tcSetSync('ok');
     return true;
   } catch(e) {
-    console.warn('ThuChi save error:', e?.message||e);
+    const msg = e?.message || String(e);
+    console.warn('ThuChi save error:', msg);
+    tcSetSync('err', msg);
     return false;
   }
 }
@@ -1990,9 +2004,12 @@ async function tcDelRecord(key) {
   try {
     const { error } = await sb.from(TC_TABLE).delete().eq('month', key);
     if (error) throw error;
+    tcSetSync('ok');
     return true;
   } catch(e) {
-    console.warn('ThuChi delete error:', e?.message||e);
+    const msg = e?.message || String(e);
+    console.warn('ThuChi delete error:', msg);
+    tcSetSync('err', msg);
     return false;
   }
 }
