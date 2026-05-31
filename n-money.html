@@ -347,11 +347,11 @@ body {
 
 /* ── Summary Grid ── */
 .summary-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1rem;
 }
 .metric-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 1rem 1rem 0.85rem;
+  border-radius: 10px; padding: 0.7rem 0.85rem 0.65rem;
   position: relative; overflow: hidden;
   box-shadow: var(--shadow-card); transition: background 0.3s, border-color 0.3s;
 }
@@ -362,50 +362,50 @@ body {
 .metric-card.count::before { background: linear-gradient(90deg, var(--blue), transparent); }
 .metric-card.urgent::before { background: linear-gradient(90deg, var(--red), transparent); }
 .metric-card.ok::before { background: linear-gradient(90deg, var(--green), transparent); }
-.metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 8px; }
-.metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1.15; letter-spacing: -0.02em; }
+.metric-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 5px; }
+.metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1.15; letter-spacing: -0.02em; }
 .metric-value.gold { color: var(--gold); }
-.metric-value.sm { font-size: 17px; padding-top: 4px; font-weight: 700; }
-.metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.metric-value.sm { font-size: 15px; padding-top: 2px; font-weight: 700; }
+.metric-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
 /* ── Cards list ── */
-.cards-list { display: flex; flex-direction: column; gap: 8px; }
+.cards-list { display: flex; flex-direction: column; gap: 6px; }
 .card-item {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 1rem 1.1rem;
+  border-radius: 10px; padding: 0.75rem 0.9rem;
   flex-direction: column; display: flex;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
   box-shadow: var(--shadow-card);
   animation: fadeUp 0.3s ease both;
 }
 .card-item:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .card-left { flex: 1; min-width: 0; }
-.card-bank-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.card-bank-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .bank-avatar {
-  width: 36px; height: 36px; border-radius: 8px;
+  width: 28px; height: 28px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 11px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 10px;
   flex-shrink: 0; letter-spacing: 0.01em;
 }
-.card-bank { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
-.card-type-tag { font-size: 11px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--bg-3); color: var(--text-secondary); letter-spacing: 0.02em; }
-.card-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.card-bank { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.card-type-tag { font-size: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; padding: 1px 6px; border-radius: 20px; background: var(--bg-3); color: var(--text-secondary); letter-spacing: 0.02em; }
+.card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
 .badge-urgent { background: var(--red-dim); color: var(--red); border: 1px solid rgba(224,85,85,0.2); }
 .badge-warn { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(224,154,48,0.2); }
 .badge-ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(76,175,130,0.2); }
-.card-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; font-style: italic; }
-.card-actions { display: flex; gap: 6px; margin-top: 10px; }
+.card-note { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+.card-actions { display: flex; gap: 5px; margin-top: 7px; }
 .card-right { text-align: right; flex-shrink: 0; }
-.card-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); white-space: nowrap; letter-spacing: -0.02em; }
-.card-amount-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; }
-.card-item-row { display: flex; align-items: flex-start; gap: 1rem; width: 100%; }
+.card-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); white-space: nowrap; letter-spacing: -0.02em; }
+.card-amount-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; }
+.card-item-row { display: flex; align-items: flex-start; gap: 0.75rem; width: 100%; }
 
 /* ── Progress ── */
-.progress-wrap { margin-top: 1.5rem; }
-.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
-.progress-bar-bg { height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
+.progress-wrap { margin-top: 8px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+.progress-bar-bg { height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
 
 /* ── Empty State ── */
@@ -493,9 +493,9 @@ body {
 .cal-days-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* Calendar grid — T2-T6 wider (1fr), T7/CN narrower (0.7fr), W wider (88px) */
-.cal-heads { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.65fr 0.65fr 1fr; gap: 3px; margin-bottom: 3px; padding: 0 0; }
+.cal-heads { display: grid; grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 3px; margin-bottom: 3px; padding: 0 0; }
 .cal-head-cell { text-align: center; padding: 5px 1px; font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif; }
-.cal-week-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.65fr 0.65fr 1fr; gap: 3px; margin-bottom: 3px; }
+.cal-week-row { display: grid; grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 3px; margin-bottom: 3px; }
 
 /* Day cell */
 .dc {
@@ -515,7 +515,7 @@ body {
 
 .dc-num { font-size: 10px; font-weight: 500; color: var(--text-muted); text-align: right; margin-bottom: 1px; line-height: 1; }
 .dc-badge { background: var(--gold); color: #0c0e14; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; margin-left: auto; }
-.dc-pnl { font-size: 13px; font-weight: 700; margin-top: auto; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif; }
+.dc-pnl { font-size: 13px; font-weight: 700; margin-top: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif; }
 .dc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dc-note { font-size: 9px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; opacity: 0.85; }
 .cal-pos { color: var(--green); }
@@ -836,8 +836,8 @@ body {
   .cal-month-label { font-size: 12px; min-width: 100px; }
   .cal-days-label { display: none; }
   .cal-wrap { padding: 4px 4px 12px; min-width: 360px; }
-  .cal-heads { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.65fr 0.65fr 1fr; gap: 2px; margin-bottom: 2px; }
-  .cal-week-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.65fr 0.65fr 1fr; gap: 2px; }
+  .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 2px; margin-bottom: 2px; }
+  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 2px; }
   .cal-head-cell { font-size: 8px; padding: 3px 0; letter-spacing: 0; }
   .dc { min-height: 58px; padding: 3px; }
   .dc-num { font-size: 9px; }
@@ -856,8 +856,8 @@ body {
   .topbar { padding: 5px 8px; }
   .page-tab { padding: 4px 7px; font-size: 10px; }
   .cal-wrap { min-width: 320px; }
-  .cal-heads { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.6fr 0.6fr 1fr; }
-  .cal-week-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.6fr 0.6fr 1fr; }
+  .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; }
+  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; }
   /* Thu Chi extra narrow */
   .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 82px; gap: 3px; }
   .tc-amt { font-size: 9px; }
@@ -867,8 +867,8 @@ body {
 }
 
 @media (max-width: 360px) {
-  .cal-heads { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.55fr 0.55fr 1fr; gap: 1px; }
-  .cal-week-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.55fr 0.55fr 1fr; gap: 1px; }
+  .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 1px; }
+  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 1px; }
   .dc { min-height: 48px; padding: 2px; }
   .dc-pnl { font-size: 9px; }
   .wc { min-height: 48px; padding: 2px 3px; }
