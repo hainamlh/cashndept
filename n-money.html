@@ -497,6 +497,25 @@ body {
 .cal-head-cell { text-align: center; padding: 5px 1px; font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif; }
 .cal-week-row { display: grid; grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 3px; margin-bottom: 3px; }
 
+/* ── Weekend toggle button (mobile only) ── */
+.cal-wknd-btn {
+  display: none;
+  align-items: center; gap: 4px;
+  padding: 4px 9px; font-size: 11px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+  border: 1px solid var(--border); background: var(--bg-2);
+  color: var(--text-muted); border-radius: 8px; cursor: pointer;
+  transition: all 0.18s; white-space: nowrap; letter-spacing: 0.01em;
+}
+.cal-wknd-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+
+/* ── Hide weekend cols when .hide-wknd ── */
+.cal-wrap.hide-wknd .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 1.4fr; }
+.cal-wrap.hide-wknd .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 1.4fr; }
+.cal-wrap.hide-wknd .cal-head-wknd,
+.cal-wrap.hide-wknd .dc.wknd,
+.cal-wrap.hide-wknd .dc.oth.wknd-oth { display: none; }
+
 /* Day cell */
 .dc {
   background: var(--cal-surface); border: 1px solid var(--border);
@@ -835,13 +854,18 @@ body {
   .tc-q-title { font-size: 8px; margin-bottom: 6px; }
   /* ── Calendar mobile ── */
   #view-calendar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cal-wknd-btn { display: flex; }
   .cal-statsbar { padding: 7px 10px; gap: 7px; flex-wrap: nowrap; }
   .cal-nav-group { gap: 4px; }
   .cal-month-label { font-size: 12px; min-width: 100px; }
   .cal-days-label { display: none; }
-  .cal-wrap { padding: 4px 4px 12px; min-width: 360px; }
-  .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 2px; margin-bottom: 2px; }
-  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 2px; }
+  .cal-wrap { padding: 4px 4px 12px; min-width: 0; }
+  /* hide-wknd: 5 day cols + W */
+  .cal-wrap.hide-wknd .cal-heads { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.4fr; gap: 2px; margin-bottom: 2px; }
+  .cal-wrap.hide-wknd .cal-week-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.4fr; gap: 2px; }
+  /* show-wknd: restore T7 CN W */
+  .cal-wrap:not(.hide-wknd) .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 2px; margin-bottom: 2px; }
+  .cal-wrap:not(.hide-wknd) .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 2px; }
   .cal-head-cell { font-size: 8px; padding: 3px 0; letter-spacing: 0; }
   .dc { min-height: 58px; padding: 3px; }
   .dc-num { font-size: 9px; }
@@ -860,8 +884,11 @@ body {
   .topbar { padding: 5px 8px; }
   .page-tab { padding: 4px 7px; font-size: 10px; }
   .cal-wrap { min-width: 320px; }
-  .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; }
-  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; }
+  .cal-wrap.hide-wknd { min-width: 0; }
+  .cal-wrap.hide-wknd .cal-heads { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.4fr; gap: 2px; }
+  .cal-wrap.hide-wknd .cal-week-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.4fr; gap: 2px; }
+  .cal-wrap:not(.hide-wknd) .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; }
+  .cal-wrap:not(.hide-wknd) .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; }
   /* Thu Chi extra narrow */
   .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 82px; gap: 3px; }
   .tc-amt { font-size: 9px; }
@@ -871,8 +898,10 @@ body {
 }
 
 @media (max-width: 360px) {
-  .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 1px; }
-  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 1px; }
+  .cal-wrap.hide-wknd .cal-heads { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.4fr; gap: 1px; }
+  .cal-wrap.hide-wknd .cal-week-row { grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1.4fr; gap: 1px; }
+  .cal-wrap:not(.hide-wknd) .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 1px; }
+  .cal-wrap:not(.hide-wknd) .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 1px; }
   .dc { min-height: 48px; padding: 2px; }
   .dc-pnl { font-size: 9px; }
   .wc { min-height: 48px; padding: 2px 3px; }
@@ -1099,20 +1128,21 @@ body {
         <button class="cal-nav-btn" id="calBtnNext">&#8250;</button>
         <button class="cal-today-btn" id="calBtnToday">Tháng này</button>
       </div>
+      <button class="cal-wknd-btn" id="calWkndBtn">T7/CN</button>
       <span class="cal-pill zero" id="calStatsPill">$0</span>
       <span class="cal-days-label" id="calStatsDays">0 ngày</span>
       <div class="dot" id="calSyncDot"></div>
     </div>
     <!-- Calendar body -->
-    <div class="cal-wrap">
+    <div class="cal-wrap" id="calWrap">
       <div class="cal-heads">
         <div class="cal-head-cell">T2</div>
         <div class="cal-head-cell">T3</div>
         <div class="cal-head-cell">T4</div>
         <div class="cal-head-cell">T5</div>
         <div class="cal-head-cell">T6</div>
-        <div class="cal-head-cell">T7</div>
-        <div class="cal-head-cell">CN</div>
+        <div class="cal-head-cell cal-head-wknd">T7</div>
+        <div class="cal-head-cell cal-head-wknd">CN</div>
         <div class="cal-head-cell">W</div>
       </div>
       <div id="calBody"></div>
@@ -1850,7 +1880,7 @@ function calRender() {
       const idx=w*7+col, dayNum=idx-off+1;
       const cell=document.createElement('div');
       if (dayNum<1||dayNum>dim) {
-        cell.className='dc oth';
+        cell.className='dc oth' + (col>=5?' wknd-oth':'');
         const pm=new Date(calY,calM,0);
         const g=dayNum<1?pm.getDate()-(off-1-idx):dayNum-dim;
         cell.innerHTML=`<div class="dc-num">${g}</div>`;
@@ -2004,6 +2034,29 @@ document.addEventListener('keydown', e => {
 document.getElementById('calBtnPrev').addEventListener('click', () => { calM--; if(calM<0){calM=11;calY--;} calInit(); });
 document.getElementById('calBtnNext').addEventListener('click', () => { calM++; if(calM>11){calM=0;calY++;} calInit(); });
 document.getElementById('calBtnToday').addEventListener('click', () => { const t=new Date(); calY=t.getFullYear(); calM=t.getMonth(); calInit(); });
+
+// ── Weekend toggle (mobile) ──
+let calShowWknd = false;
+function calApplyWknd() {
+  const wrap = document.getElementById('calWrap');
+  const btn  = document.getElementById('calWkndBtn');
+  if (calShowWknd) {
+    wrap.classList.remove('hide-wknd');
+    btn.classList.add('active');
+    btn.textContent = 'Ẩn T7/CN';
+  } else {
+    wrap.classList.add('hide-wknd');
+    btn.classList.remove('active');
+    btn.textContent = 'T7/CN';
+  }
+}
+document.getElementById('calWkndBtn').addEventListener('click', () => {
+  calShowWknd = !calShowWknd;
+  calApplyWknd();
+});
+// Init: ẩn T7/CN mặc định trên mobile
+if (isMobile()) { calShowWknd = false; calApplyWknd(); }
+else { document.getElementById('calWrap').classList.remove('hide-wknd'); }
 
 async function calInit() {
   calLoadLocal();   // show cached data instantly
