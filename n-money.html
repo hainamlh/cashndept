@@ -655,7 +655,7 @@ body {
 
 .tc-quarter-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 88px;
+  grid-template-columns: 1fr 1fr 1fr 120px;
   gap: 6px;
 }
 
@@ -819,14 +819,14 @@ body {
 
   /* ── Thu Chi mobile ── */
   .tc-wrap { padding: 8px 8px 20px; }
-  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 68px; gap: 4px; }
+  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 90px; gap: 4px; }
   .tc-month-card { padding: 7px 8px; border-radius: 8px; }
   .tc-card-month { font-size: 9px; margin-bottom: 5px; letter-spacing: 0; }
   .tc-amt { font-size: 10px; }
   .tc-lbl { font-size: 8px; letter-spacing: 0; }
   .tc-divider { margin: 3px 0; }
-  .tc-q-card { padding: 7px 7px; border-radius: 8px; }
-  .tc-q-val { font-size: 10px; }
+  .tc-q-card { padding: 7px 8px; border-radius: 8px; }
+  .tc-q-val { font-size: 11px; }
   .tc-q-lbl { font-size: 7px; letter-spacing: 0; }
   .tc-q-title { font-size: 8px; margin-bottom: 6px; }
   #view-calendar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -859,11 +859,11 @@ body {
   .page-tab { padding: 4px 7px; font-size: 10px; }
   .cal-wrap { min-width: 340px; }
   /* Thu Chi extra narrow */
-  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 60px; gap: 3px; }
+  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 76px; gap: 3px; }
   .tc-amt { font-size: 9px; }
-  .tc-q-val { font-size: 9px; }
+  .tc-q-val { font-size: 10px; }
   .tc-month-card { padding: 6px 6px; }
-  .tc-q-card { padding: 6px 5px; }
+  .tc-q-card { padding: 6px 6px; }
 }
 
 @media (max-width: 360px) {
@@ -1124,19 +1124,10 @@ body {
         <button class="cal-nav-btn" id="tcBtnNext">&#8250;</button>
         <button class="cal-today-btn" id="tcBtnNow">Năm này</button>
       </div>
-      <div style="display:flex;align-items:center;gap:14px;margin-left:auto">
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
-          <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Tổng thu</span>
-          <span id="tcYearThu" style="font-size:15px;font-weight:800;color:var(--green);font-family:'Plus Jakarta Sans',sans-serif;line-height:1">—</span>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
-          <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Tổng chi</span>
-          <span id="tcYearChi" style="font-size:15px;font-weight:800;color:var(--red);font-family:'Plus Jakarta Sans',sans-serif;line-height:1">—</span>
-        </div>
-        <div style="width:1px;height:30px;background:var(--border)"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
           <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Net năm</span>
-          <span id="tcYearNet" class="cal-pill zero" style="font-size:13px;padding:2px 10px;line-height:1.4">—</span>
+          <span id="tcYearNet" class="cal-pill zero" style="font-size:14px;padding:3px 12px;line-height:1.4">—</span>
         </div>
         <div class="dot" id="tcSyncDot"></div>
       </div>
@@ -1993,20 +1984,33 @@ function tcSetSync(state, errMsg) {
   document.getElementById('tcSyncDot').title = errMsg || (state === 'ok' ? 'Đã đồng bộ' : '');
 }
 
+// ── Raw REST helper cho Thu Chi (bypass RLS issue với sb client) ──
+async function tcRest(path, opts = {}) {
+  const res = await fetch(SB_URL + path, {
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...(opts.headers || {})
+    },
+    ...opts
+  });
+  if (res.status === 204 || res.status === 200 && opts.method === 'DELETE') return null;
+  const body = await res.json();
+  if (!res.ok) throw new Error(body?.message || body?.error || JSON.stringify(body));
+  return body;
+}
+
 // ── Supabase load year ──
 async function tcLoadYear() {
   tcSetSync('spin');
-  // month format: "YYYY-MM" — compare as strings works correctly for same-year range
   const from = `${tcYear}-01`;
   const to   = `${tcYear}-12`;
   try {
-    const { data, error } = await sb
-      .from(TC_TABLE)
-      .select('month,thu,chi,note')
-      .gte('month', from)
-      .lte('month', to)
-      .order('month', { ascending: true });
-    if (error) throw error;
+    const data = await tcRest(
+      `/rest/v1/${TC_TABLE}?month=gte.${from}&month=lte.${to}&select=month,thu,chi,note&order=month.asc`
+    );
     if (data && data.length > 0) {
       data.forEach(r => {
         tcData[r.month] = { thu: r.thu || 0, chi: r.chi || 0, note: r.note || '' };
@@ -2018,19 +2022,25 @@ async function tcLoadYear() {
     const msg = e?.message || String(e);
     console.warn('ThuChi load error:', msg);
     tcSetSync('err', msg);
-    showToast('Thu Chi: ' + (msg.includes('relation') ? 'Chưa tạo table thu_chi' : msg.slice(0,60)), 'error');
+    const hint = msg.includes('relation') || msg.includes('does not exist')
+      ? 'Chưa tạo table thu_chi trong Supabase'
+      : msg.includes('security') || msg.includes('policy') || msg.includes('401')
+      ? 'RLS đang chặn — chạy: ALTER TABLE thu_chi DISABLE ROW LEVEL SECURITY'
+      : msg.slice(0, 80);
+    showToast('Thu Chi: ' + hint, 'error');
   }
 }
 
-// ── Supabase save ──
+// ── Save record ──
 async function tcSaveRecord(key, thu, chi, note) {
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
   try {
-    const { error } = await sb
-      .from(TC_TABLE)
-      .upsert({ month: key, thu: +thu || 0, chi: +chi || 0, note: note || '' }, { onConflict: 'month' });
-    if (error) throw error;
+    await tcRest(`/rest/v1/${TC_TABLE}`, {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ month: key, thu: +thu || 0, chi: +chi || 0, note: note || '' })
+    });
     tcSetSync('ok');
     return true;
   } catch(e) {
@@ -2041,12 +2051,12 @@ async function tcSaveRecord(key, thu, chi, note) {
   }
 }
 
+// ── Delete record ──
 async function tcDelRecord(key) {
   delete tcData[key];
   tcSaveLocal();
   try {
-    const { error } = await sb.from(TC_TABLE).delete().eq('month', key);
-    if (error) throw error;
+    await tcRest(`/rest/v1/${TC_TABLE}?month=eq.${key}`, { method: 'DELETE' });
     tcSetSync('ok');
     return true;
   } catch(e) {
@@ -2184,7 +2194,7 @@ function tcBuildQCard(y, qIdx) {
 function tcRender() {
   document.getElementById('tcYearLabel').textContent = tcYear;
 
-  // Year totals
+  // Year net total only
   let yThu = 0, yChi = 0, hasYear = false;
   for (let m = 0; m < 12; m++) {
     const rec = tcGet(tcKey(tcYear, m));
@@ -2192,9 +2202,7 @@ function tcRender() {
   }
   const yNet    = yThu - yChi;
   const yNetInf = tcFmtNet(hasYear ? yNet : null);
-  document.getElementById('tcYearThu').textContent = hasYear ? tcFmt(yThu) : '—';
-  document.getElementById('tcYearChi').textContent = hasYear ? tcFmt(yChi) : '—';
-  const yNetEl = document.getElementById('tcYearNet');
+  const yNetEl  = document.getElementById('tcYearNet');
   yNetEl.textContent = hasYear ? yNetInf.txt : '—';
   yNetEl.className   = 'cal-pill ' + (!hasYear ? 'zero' : yNet > 0 ? '' : yNet < 0 ? 'neg' : 'zero');
 
@@ -2298,28 +2306,11 @@ document.getElementById('tcBtnNow').addEventListener('click',  () => { tcYear = 
 async function tcInit() {
   tcLoadLocal();
   tcRender();
-  // Test connection first — surface exact error to user
-  try {
-    const { error } = await sb.from(TC_TABLE).select('month').limit(1);
-    if (error) {
-      const msg = error.message || String(error);
-      const friendly = msg.includes('relation') || msg.includes('does not exist')
-        ? 'Table "thu_chi" chưa tồn tại trong Supabase. Cần chạy SQL tạo table.'
-        : msg.includes('permission') || msg.includes('policy') || msg.includes('RLS')
-        ? 'Supabase RLS đang chặn — cần DISABLE ROW LEVEL SECURITY cho table thu_chi.'
-        : msg;
-      showToast('☁ Thu Chi: ' + friendly, 'error');
-      tcSetSync('err', friendly);
-      return;
-    }
-  } catch(e) {
-    showToast('☁ Thu Chi: Không kết nối được Supabase', 'error');
-    tcSetSync('err', String(e));
-    return;
-  }
   await tcLoadYear();
   tcRender();
 }
+
+// Also remove unused tcYearThu/tcYearChi update in tcRender
 
 // ══════════════════════════════════════════════════════════════
 // BOOT
