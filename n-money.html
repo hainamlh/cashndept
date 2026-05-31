@@ -841,7 +841,7 @@ body {
   .cal-days-label { display: none; }
   .cal-wrap { padding: 4px 4px 12px; min-width: 360px; }
   .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 2px; margin-bottom: 2px; }
-  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 2px; }
+  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 2px; }
   .cal-head-cell { font-size: 8px; padding: 3px 0; letter-spacing: 0; }
   .dc { min-height: 58px; padding: 3px; }
   .dc-num { font-size: 9px; }
@@ -861,7 +861,7 @@ body {
   .page-tab { padding: 4px 7px; font-size: 10px; }
   .cal-wrap { min-width: 320px; }
   .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; }
-  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; }
+  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; }
   /* Thu Chi extra narrow */
   .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 82px; gap: 3px; }
   .tc-amt { font-size: 9px; }
@@ -872,7 +872,7 @@ body {
 
 @media (max-width: 360px) {
   .cal-heads { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 1px; }
-  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.89fr 0.89fr 0.96fr; gap: 1px; }
+  .cal-week-row { grid-template-columns: 0.96fr 0.96fr 0.96fr 0.96fr 0.96fr 0.70fr 0.70fr 1.3fr; gap: 1px; }
   .dc { min-height: 48px; padding: 2px; }
   .dc-pnl { font-size: 9px; }
   .wc { min-height: 48px; padding: 2px 3px; }
@@ -1327,10 +1327,11 @@ async function fetchRate() {
 // ══════════════════════════════════════════════════════════════
 // FORMATTING (shared)
 // ══════════════════════════════════════════════════════════════
+function isMobile() { return window.innerWidth < 768; }
 function fmtVND(n) { if(!n&&n!==0)return'—'; return new Intl.NumberFormat('vi-VN').format(Math.round(n))+' ₫'; }
 function fmtVND_M(n) { if(!n&&n!==0)return'—'; const m=n/1_000_000; return (m%1===0?m.toFixed(0):m.toFixed(1))+' tr₫'; }
 function fmtUSD_full(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; return '$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.round(usd)); }
-function fmtUSD_K(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; if(usd>=1000)return'$'+(usd/1000).toFixed(1)+'K'; return'$'+Math.round(usd); }
+function fmtUSD_K(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; if(Math.abs(usd)>=1e6)return'$'+(usd/1e6).toFixed(isMobile()?1:2).replace(/\.?0+$/,'')+'M'; if(isMobile()&&Math.abs(usd)>=1000)return'$'+(usd/1000).toFixed(1)+'K'; return'$'+new Intl.NumberFormat('en-US').format(Math.round(usd)); }
 function fmt(n)  { return currency==='USD'?fmtUSD_full(n):fmtVND(n); }
 function fmtM(n) { return currency==='USD'?fmtUSD_K(n):fmtVND_M(n); }
 function fmtBoth(n) { if(currency==='USD')return fmtUSD_full(n)+' ('+fmtVND_M(n)+')'; return fmtVND_M(n)+' ('+fmtUSD_K(n)+')'; }
@@ -1793,9 +1794,9 @@ function calFmtUSD(usd, full=false) {
   if(usd==null||usd==='')return''; const n=parseFloat(usd); if(isNaN(n))return''; if(n===0)return'$0';
   const s=n>0?'+$':'-$',a=Math.abs(n);
   if(full)return s+a.toLocaleString('en-US',{minimumFractionDigits:a%1===0?0:2,maximumFractionDigits:2});
-  if(a>=1e6)return s+(a/1e6).toFixed(2)+'M';
-  if(a>=1000)return s+(a/1000).toFixed(a>=10000?1:2)+'K';
-  return s+(a%1===0?a.toFixed(0):a.toFixed(1));
+  if(a>=1e6)return s+(a/1e6).toFixed(isMobile()?1:2).replace(/\.?0+$/,'')+'M';
+  if(isMobile()&&a>=1000)return s+(a/1000).toFixed(a>=10000?1:2)+'K';
+  return s+new Intl.NumberFormat('en-US').format(Math.round(a));
 }
 function calFmtVND_r(usd, full=false) {
   if(usd==null||usd==='')return''; const n=parseFloat(usd)*calGetFx(); if(isNaN(n))return''; if(n===0)return'0';
@@ -1896,7 +1897,7 @@ function calOpenModal(y,m,d,key) {
   calSelKey=key;
   const dow=new Date(y,m,d).getDay(),di=dow===0?6:dow-1;
   document.getElementById('calModalTitle').textContent=CAL_DNAMES[di]+', '+String(d).padStart(2,'0')+'/'+String(m+1).padStart(2,'0')+'/'+y;
-  document.getElementById('calModalSub').textContent='';
+  document.getElementById('calModalSub').textContent=key;
   document.getElementById('calModeLabel').textContent=calCurMode;
   const rec=calData[key]||{};
   const disp=calToDisp(rec.pnl);
@@ -2113,8 +2114,9 @@ function tcFmt(valMillion) {
   if (currency === 'USD') {
     // convert triệu VNĐ → USD
     const usd = (n * 1_000_000) / usdRate;
-    if (Math.abs(usd) >= 1000) return '$' + (usd/1000).toFixed(1) + 'K';
-    return '$' + usd.toFixed(0);
+    if (Math.abs(usd) >= 1e6) return '$' + (usd/1e6).toFixed(isMobile()?1:2).replace(/\.?0+$/,'') + 'M';
+    if (isMobile() && Math.abs(usd) >= 1000) return '$' + (usd/1000).toFixed(1) + 'K';
+    return '$' + new Intl.NumberFormat('en-US').format(Math.round(usd));
   }
   // VNĐ display
   if (Math.abs(n) >= 1000) return (n/1000).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
@@ -2126,6 +2128,27 @@ function tcFmtNet(valMillion) {
   const n = parseFloat(valMillion);
   if (n === 0) return { txt: '0', cls: 'muted' };
   return { txt: (n > 0 ? '+' : '') + tcFmt(n), cls: n > 0 ? 'net-p' : 'net-n' };
+}
+
+// ── Format riêng cho Quý — giữ dạng K (không đổi) ──
+function tcFmtQ(valMillion) {
+  if (valMillion == null || valMillion === '' || isNaN(+valMillion)) return '—';
+  const n = parseFloat(valMillion);
+  if (currency === 'USD') {
+    const usd = (n * 1_000_000) / usdRate;
+    if (Math.abs(usd) >= 1e6) return '$' + (usd/1e6).toFixed(1) + 'M';
+    if (Math.abs(usd) >= 1000) return '$' + (usd/1000).toFixed(1) + 'K';
+    return '$' + Math.round(usd);
+  }
+  if (Math.abs(n) >= 1000) return (n/1000).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
+  if (Math.abs(n) >= 1)    return n % 1 === 0 ? n.toFixed(0) + ' tr' : n.toFixed(1) + ' tr';
+  return (n * 1000).toFixed(0) + ' nghìn';
+}
+function tcFmtNetQ(valMillion) {
+  if (valMillion == null || isNaN(+valMillion)) return { txt: '—', cls: 'muted' };
+  const n = parseFloat(valMillion);
+  if (n === 0) return { txt: '0', cls: 'muted' };
+  return { txt: (n > 0 ? '+' : '') + tcFmtQ(n), cls: n > 0 ? 'net-p' : 'net-n' };
 }
 
 // ── Input unit label ──
@@ -2206,7 +2229,7 @@ function tcBuildQCard(y, qIdx) {
     if (rec !== null) { hasAny = true; qThu += rec.thu||0; qChi += rec.chi||0; }
   });
   const qNet    = qThu - qChi;
-  const netInfo = tcFmtNet(hasAny ? qNet : null);
+  const netInfo = tcFmtNetQ(hasAny ? qNet : null);
 
   const card = document.createElement('div');
   card.className = 'tc-q-card';
@@ -2214,11 +2237,11 @@ function tcBuildQCard(y, qIdx) {
     <div class="tc-q-title">${TC_Q_NAMES[qIdx]}</div>
     <div class="tc-q-row">
       <span class="tc-q-lbl tc-lbl-thu">Thu</span>
-      <span class="tc-q-val thu-c">${hasAny ? tcFmt(qThu) : '—'}</span>
+      <span class="tc-q-val thu-c">${hasAny ? tcFmtQ(qThu) : '—'}</span>
     </div>
     <div class="tc-q-row">
       <span class="tc-q-lbl tc-lbl-chi">Chi</span>
-      <span class="tc-q-val chi-c">${hasAny ? tcFmt(qChi) : '—'}</span>
+      <span class="tc-q-val chi-c">${hasAny ? tcFmtQ(qChi) : '—'}</span>
     </div>
     <div class="tc-q-row">
       <span class="tc-q-lbl tc-lbl-net">Net</span>
@@ -2269,7 +2292,7 @@ function tcOpenModal(y, m, key) {
   const unit = tcUnitLabel();
 
   document.getElementById('tcModalTitle').textContent = TC_MONTHS[m] + ' ' + y;
-  document.getElementById('tcModalSub').textContent   = rec ? 'Chỉnh sửa' : 'Nhập mới';
+  document.getElementById('tcModalSub').textContent   = key + (rec ? ' · Chỉnh sửa' : ' · Nhập mới');
   document.getElementById('tcLabelThu').textContent   = '💰 THU (' + unit + ')';
   document.getElementById('tcLabelChi').textContent   = '💸 CHI (' + unit + ')';
 
