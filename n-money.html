@@ -515,9 +515,10 @@ body {
 
 .dc-num { font-size: 10px; font-weight: 500; color: var(--text-muted); text-align: right; margin-bottom: 1px; line-height: 1; }
 .dc-badge { background: var(--gold); color: #0c0e14; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; margin-left: auto; }
-.dc-pnl { font-size: 13px; font-weight: 700; margin-top: 6px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif; }
+.dc-pnl { font-size: 13px; font-weight: 700; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif; margin-top: 6px; }
 .dc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dc-note { font-size: 9px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; opacity: 0.85; }
+.dc-note { font-size: 9px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.85; line-height: 1.4; min-height: 13px; }
+.dc-pnl-row { margin-top: 6px; overflow: hidden; min-width: 0; }
 .cal-pos { color: var(--green); }
 .cal-neg { color: var(--red); }
 .cal-zer { color: var(--text-muted); }
@@ -533,13 +534,13 @@ body {
 .wc-pnl {
   font-size: 13px; font-weight: 800;
   overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; margin-bottom: 2px;
+  white-space: nowrap; line-height: 1.4;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  /* scale font down to fit if needed */
   max-width: 100%;
 }
-.wc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
-.wc-days { font-size: 9px; color: var(--text-muted); white-space: nowrap; }
+.wc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc-days { font-size: 9px; color: var(--text-muted); white-space: nowrap; line-height: 1.4; min-height: 13px; }
+.wc-pnl-row { overflow: hidden; min-width: 0; }
 
 /* ══ MODALS ══════════════════════════════════════════════════ */
 .modal-overlay {
@@ -1244,7 +1245,7 @@ function setCurrency(c) {
 function updateSyncStatus() {
   const dot = document.getElementById('syncDot');
   const txt = document.getElementById('syncStatusText');
-  if (syncCode) { dot.className = 'dot ok'; txt.textContent = '☁ ' + syncCode; }
+  if (syncCode) { dot.className = 'dot ok'; txt.textContent = syncCode; }
   else          { dot.className = 'dot';    txt.textContent = 'Chưa đồng bộ'; }
 }
 function openSyncModal() {
@@ -1862,8 +1863,11 @@ function calRender() {
       if(hasPnl){
         const c=pv>0?'cal-pos':pv<0?'cal-neg':'cal-zer';
         inner+=`<div class="dc-pnl ${c}">${calFmtP(pv)}</div>`;
+        inner+=`<div class="dc-note">${rec&&rec.note?escHtml(rec.note):''}</div>`;
+      } else if(rec&&rec.note){
+        inner+=`<div class="dc-pnl" style="visibility:hidden">—</div>`;
+        inner+=`<div class="dc-note">${escHtml(rec.note)}</div>`;
       }
-      if(rec&&rec.note)inner+=`<div class="dc-note">${escHtml(rec.note)}</div>`;
       cell.innerHTML=inner;
       const _key=key,_d=dayNum;
       cell.addEventListener('click',()=>calOpenModal(calY,calM,_d,_key));
