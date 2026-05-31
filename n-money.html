@@ -855,6 +855,7 @@ body {
   /* ── Calendar mobile ── */
   #view-calendar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cal-wknd-btn { display: flex; }
+  #calStatsPill { font-size: 12px; padding: 3px 8px; }
   .cal-statsbar { padding: 7px 10px; gap: 7px; flex-wrap: nowrap; }
   .cal-nav-group { gap: 4px; }
   .cal-month-label { font-size: 12px; min-width: 100px; }
@@ -1160,10 +1161,7 @@ body {
         <button class="cal-today-btn" id="tcBtnNow">Năm này</button>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
-          <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Net năm</span>
           <span id="tcYearNet" class="cal-pill zero" style="font-size:14px;padding:3px 12px;line-height:1.4">—</span>
-        </div>
         <div class="dot" id="tcSyncDot"></div>
       </div>
     </div>
@@ -1546,7 +1544,18 @@ function toggleManualForm() {
 
 function parseCommaNum(str) {
   if (!str) return NaN;
-  return parseFloat(str.toString().replace(/,/g,'').replace(/\./g,'').trim());
+  let s = str.toString().trim();
+  // Detect dấu chấm là ngăn cách hàng nghìn (vd: 4.000.000 hoặc 4.000) vs thập phân (4.5)
+  // Nếu có nhiều hơn 1 dấu chấm, hoặc dấu chấm cách cuối >3 chữ số → là hàng nghìn
+  const dots = (s.match(/\./g)||[]).length;
+  if (dots > 1) {
+    s = s.replace(/\./g,''); // 4.000.000 → 4000000
+  } else if (dots === 1) {
+    const afterDot = s.split('.')[1];
+    if (afterDot && afterDot.length === 3) s = s.replace(/\./g,''); // 4.000 → 4000
+    // else: 4.5 → giữ nguyên (thập phân)
+  }
+  return parseFloat(s.replace(/,/g,''));
 }
 
 function addManual() {
@@ -1569,7 +1578,8 @@ function addManual() {
 }
 
 function fmtInputComma(el) {
-  const v = el.value.replace(/[^\d-]/g,'');
+  // Cho phép số, dấu trừ, và dấu chấm thập phân (cần thiết khi nhập USD)
+  const v = el.value.replace(/[^\d.\-]/g,'');
   el.value = v;
 }
 function attachCommaInputs() {
@@ -1616,8 +1626,10 @@ function applyAdjust(i) {
   const dateHidden = document.getElementById(`adj-date-hidden-${i}`);
   const amtEl   = document.getElementById(`adj-amt-${i}`);
   const noteEl  = document.getElementById(`adj-note-${i}`);
-  const amount  = parseCommaNum(amtEl.value);
+  let amount  = parseCommaNum(amtEl.value);
   if (!amount||isNaN(amount)) { showToast('Nhập số tiền +/- cần điều chỉnh','error'); return; }
+  // Nếu đang ở chế độ USD, convert sang VNĐ để lưu
+  if (currency === 'USD') amount = Math.round(amount * usdRate);
   const date = dateEl.value||dateHidden?.value||new Date().toISOString().split('T')[0];
   const note = noteEl.value.trim()||'';
   const c = state.cards[i];
@@ -1713,7 +1725,7 @@ function renderDashboard() {
         <div class="adjust-title">± Điều chỉnh dư nợ</div>
         <div class="adjust-row1">
           <input class="adjust-input adj-date" id="adj-date-${i}" type="date" value="${new Date().toISOString().split('T')[0]}">
-          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="numeric" placeholder="+/- Số tiền (VNĐ)" oninput="fmtInputComma(this)">
+          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="decimal" placeholder="${currency==='USD'?'+/- Số tiền (USD)':'+/- Số tiền (VNĐ)'}" oninput="fmtInputComma(this)">
           <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
           <button class="adj-date-btn" title="Chọn ngày" onclick="document.getElementById('adj-date-hidden-${i}').showPicker?.()">📅</button>
           <input class="adj-date-hidden" id="adj-date-hidden-${i}" type="date" value="${new Date().toISOString().split('T')[0]}" onchange="document.getElementById('adj-date-${i}').value=this.value">
@@ -1857,6 +1869,21 @@ function calFmtCompact(usd) {
 }
 const calFmtP = (usd, full=false) => calCurMode==='VND' ? calFmtVND_r(usd,full) : calFmtUSD(usd,full);
 
+// ── Pill format: $4k / $4.12k (no trailing zeros), dùng cho tổng tháng ──
+function calFmtPill(usd) {
+  if (usd == null || usd === '') return '$0';
+  const n = parseFloat(usd); if (isNaN(n)) return '$0';
+  if (calCurMode === 'VND') return calFmtVND_r(n);
+  const s = n >= 0 ? '$' : '-$', a = Math.abs(n);
+  if (a >= 1e6) return s + (a/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
+  if (a >= 1000) {
+    const k = a / 1000;
+    const str = k % 1 === 0 ? k.toFixed(0) : k.toFixed(2).replace(/\.?0+$/,'');
+    return s + str + 'k';
+  }
+  return s + Math.round(a);
+}
+
 function calRender() {
   const tk = calTodayKey();
   document.getElementById('calMonthLabel').textContent = CAL_MONTHS[calM]+' '+calY;
@@ -1866,7 +1893,7 @@ function calRender() {
   let mPnl=0, mDays=0;
   for (let d=1;d<=dim;d++) { const r=calData[calDk(calY,calM,d)]; if(r&&r.pnl!=null&&r.pnl!==''){mPnl+=parseFloat(r.pnl);mDays++;} }
   const pill=document.getElementById('calStatsPill');
-  pill.textContent = mDays>0?(calFmtP(mPnl)||'$0'):'$0';
+  pill.textContent = mDays>0?(calFmtPill(mPnl)||'$0'):'$0';
   pill.className = 'cal-pill '+(mDays===0?'zero':mPnl>=0?'':'neg');
   document.getElementById('calStatsDays').textContent = mDays+' ngày';
   const body = document.getElementById('calBody');
