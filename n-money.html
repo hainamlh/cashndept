@@ -589,6 +589,9 @@ body {
 }
 .cal-modal-field:focus { border-color: var(--gold); }
 .cal-modal-preview { text-align: center; font-size: 20px; font-weight: 700; min-height: 28px; margin-bottom: 16px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.expr-hint { font-size: 8px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.5px; text-transform: none; opacity: 0.7; }
+.expr-result { font-size: 11px; color: var(--gold); font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; min-height: 16px; margin-top: -4px; margin-bottom: 6px; padding-left: 2px; transition: opacity 0.15s; }
+.expr-result.err { color: var(--red); }
 .cal-sync-msg { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 9px; min-height: 14px; }
 .cal-btn-save {
   width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-light));
@@ -945,8 +948,9 @@ body {
       </div>
       <button onclick="calCloseModal()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0 3px;line-height:1">&#x2715;</button>
     </div>
-    <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">P&L (<span id="calModeLabel">USD</span>)</label>
-    <input id="calPnlInput" type="number" step="0.01" autocomplete="off" placeholder="+ lãi  /  − lỗ" class="cal-modal-field">
+    <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">P&L (<span id="calModeLabel">USD</span>) <span class="expr-hint">hỗ trợ + − × ÷</span></label>
+    <input id="calPnlInput" type="text" inputmode="decimal" autocomplete="off" placeholder="vd: 150+80-30" class="cal-modal-field expr-input">
+    <div class="expr-result" id="calExprResult"></div>
     <div class="cal-modal-preview cal-zer" id="calPnlPreview"></div>
     <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">Ghi chú</label>
     <input id="calNoteInput" type="text" autocomplete="off" placeholder="Sự kiện, nhận xét..." class="cal-modal-field">
@@ -1148,11 +1152,13 @@ body {
         <button onclick="tcCloseModal()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0 3px;line-height:1">&#x2715;</button>
       </div>
       <!-- Thu -->
-      <label style="display:block;font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelThu">💰 THU</label>
-      <input id="tcThuInput" type="number" step="0.01" autocomplete="off" placeholder="0" class="cal-modal-field" style="border-color:rgba(76,175,130,0.3)">
+      <label style="display:block;font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelThu">💰 THU <span class="expr-hint">hỗ trợ + − × ÷</span></label>
+      <input id="tcThuInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" class="cal-modal-field expr-input" style="border-color:rgba(76,175,130,0.3)">
+      <div class="expr-result" id="tcThuExprResult"></div>
       <!-- Chi -->
-      <label style="display:block;font-size:9px;font-weight:700;color:var(--red);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelChi">💸 CHI</label>
-      <input id="tcChiInput" type="number" step="0.01" autocomplete="off" placeholder="0" class="cal-modal-field" style="border-color:rgba(224,85,85,0.3)">
+      <label style="display:block;font-size:9px;font-weight:700;color:var(--red);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelChi">💸 CHI <span class="expr-hint">hỗ trợ + − × ÷</span></label>
+      <input id="tcChiInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" class="cal-modal-field expr-input" style="border-color:rgba(224,85,85,0.3)">
+      <div class="expr-result" id="tcChiExprResult"></div>
       <!-- Net preview -->
       <div id="tcNetPreview" style="text-align:center;font-size:18px;font-weight:800;min-height:30px;margin-bottom:16px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-muted)"></div>
       <!-- Note -->
@@ -1904,22 +1910,70 @@ function calOpenModal(y,m,d,key) {
 }
 function calCloseModal() { document.getElementById('calModalBg').classList.remove('open'); calSelKey=null; }
 
-function calUpdPrev() {
-  const v=document.getElementById('calPnlInput').value;
-  const el=document.getElementById('calPnlPreview');
-  if(v===''||v==null){el.innerHTML='';el.className='cal-modal-preview cal-zer';return;}
-  const n=parseFloat(v);if(isNaN(n)){el.innerHTML='';return;}
-  const usd=calToUSD(n);
-  el.innerHTML=calFmtP(usd,true);
-  el.className='cal-modal-preview '+(n>0?'cal-pos':n<0?'cal-neg':'cal-zer');
+// ── EXPRESSION EVALUATOR ─────────────────────────────────────
+// ── EXPRESSION EVALUATOR ─────────────────────────────────────
+function evalExpr(raw) {
+  if (raw === '' || raw == null) return { val: null, display: '', err: false };
+  var s = raw.toString().replace(/×/g,'*').replace(/÷/g,'/').replace(/\s/g,'').replace(/,/g,'.');
+  // Allow only safe chars
+  if (/[^0-9+\-*/.()]/.test(s)) return { val: null, display: '⚠ Ký tự không hợp lệ', err: true };
+  var result;
+  try { result = Function('"use strict";return(' + s + ')')(); } catch(e) { return { val: null, display: '', err: false }; }
+  if (typeof result !== 'number' || !isFinite(result)) return { val: null, display: '⚠ Lỗi tính toán', err: true };
+  var rounded = Math.round(result * 1e6) / 1e6;
+  // Show "= result" only when input has an operator (i.e. is an expression)
+  var hasOp = /[+\-*/]/.test(s.replace(/^-/,''));
+  return { val: rounded, display: hasOp ? ('= ' + rounded.toLocaleString('vi-VN', {maximumFractionDigits:4})) : '', err: false };
 }
+
+function bindExprInput(inputId, resultId, onValue) {
+  var inp = document.getElementById(inputId);
+  var res = document.getElementById(resultId);
+  if (!inp || !res) return;
+  inp.addEventListener('input', function() {
+    var r = evalExpr(inp.value);
+    res.textContent = r.display;
+    res.className = 'expr-result' + (r.err ? ' err' : '');
+    if (onValue) onValue();
+  });
+  // Press '=' key → commit result into field
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === '=') {
+      e.preventDefault();
+      var r = evalExpr(inp.value);
+      if (!r.err && r.val !== null) {
+        inp.value = r.val;
+        res.textContent = '';
+        if (onValue) onValue();
+      }
+    }
+  });
+}
+
+function getExprVal(inputId) {
+  var r = evalExpr(document.getElementById(inputId).value);
+  return (r.err || r.val === null) ? null : r.val;
+}
+// ─────────────────────────────────────────────────────────────
+
+function calUpdPrev() {
+  var v = document.getElementById('calPnlInput').value;
+  var el = document.getElementById('calPnlPreview');
+  var r = evalExpr(v);
+  if (r.val === null || v === '') { el.innerHTML = ''; el.className = 'cal-modal-preview cal-zer'; return; }
+  var usd = calToUSD(r.val);
+  el.innerHTML = calFmtP(usd, true);
+  el.className = 'cal-modal-preview ' + (r.val > 0 ? 'cal-pos' : r.val < 0 ? 'cal-neg' : 'cal-zer');
+}
+bindExprInput('calPnlInput', 'calExprResult', calUpdPrev);
 document.getElementById('calPnlInput').addEventListener('input', calUpdPrev);
 
 document.getElementById('calSaveBtn').addEventListener('click', async () => {
   if(!calSelKey)return;
+  const n=getExprVal('calPnlInput');
   const raw=document.getElementById('calPnlInput').value;
   const note=document.getElementById('calNoteInput').value.trim();
-  const usdVal=raw===''?null:calToUSD(parseFloat(raw));
+  const usdVal=(raw===''||raw==null)?null:(n!==null?calToUSD(n):null);
   const msg=document.getElementById('calSyncMsg');
   msg.textContent='Đang lưu...'; calSetSync('spin');
   const ok=await calSaveRecord(calSelKey,usdVal,note);
@@ -2235,28 +2289,28 @@ function tcCloseModal() {
 }
 
 function tcUpdNetPreview() {
-  const thu = parseFloat(document.getElementById('tcThuInput').value) || 0;
-  const chi = parseFloat(document.getElementById('tcChiInput').value) || 0;
-  // convert to million VNĐ for net calc
-  const thuM = tcInputToMillion(thu);
-  const chiM = tcInputToMillion(chi);
-  const net  = thuM - chiM;
-  const el   = document.getElementById('tcNetPreview');
+  var thu = getExprVal('tcThuInput') || 0;
+  var chi = getExprVal('tcChiInput') || 0;
+  var thuM = tcInputToMillion(thu);
+  var chiM = tcInputToMillion(chi);
+  var net  = thuM - chiM;
+  var el   = document.getElementById('tcNetPreview');
   if (!thu && !chi) { el.textContent = ''; el.style.color = 'var(--text-muted)'; return; }
-  const inf  = tcFmtNet(net);
+  var inf  = tcFmtNet(net);
   el.textContent = 'Net: ' + inf.txt;
   el.style.color = net > 0 ? 'var(--green)' : net < 0 ? 'var(--red)' : 'var(--text-muted)';
 }
 
+bindExprInput('tcThuInput', 'tcThuExprResult', tcUpdNetPreview);
+bindExprInput('tcChiInput', 'tcChiExprResult', tcUpdNetPreview);
 document.getElementById('tcThuInput').addEventListener('input', tcUpdNetPreview);
 document.getElementById('tcChiInput').addEventListener('input', tcUpdNetPreview);
 
 document.getElementById('tcSaveBtn').addEventListener('click', async () => {
   if (!tcSelKey) return;
-  const thuInput = parseFloat(document.getElementById('tcThuInput').value) || 0;
-  const chiInput = parseFloat(document.getElementById('tcChiInput').value) || 0;
+  const thuInput = getExprVal('tcThuInput') ?? 0;
+  const chiInput = getExprVal('tcChiInput') ?? 0;
   const note     = document.getElementById('tcNoteInput').value.trim();
-  // Always store in triệu VNĐ
   const thu = tcInputToMillion(thuInput);
   const chi = tcInputToMillion(chiInput);
   const msg = document.getElementById('tcSyncMsg');
