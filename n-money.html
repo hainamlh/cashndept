@@ -1896,7 +1896,7 @@ function calOpenModal(y,m,d,key) {
   calSelKey=key;
   const dow=new Date(y,m,d).getDay(),di=dow===0?6:dow-1;
   document.getElementById('calModalTitle').textContent=CAL_DNAMES[di]+', '+String(d).padStart(2,'0')+'/'+String(m+1).padStart(2,'0')+'/'+y;
-  document.getElementById('calModalSub').textContent=key;
+  document.getElementById('calModalSub').textContent='';
   document.getElementById('calModeLabel').textContent=calCurMode;
   const rec=calData[key]||{};
   const disp=calToDisp(rec.pnl);
@@ -2269,7 +2269,7 @@ function tcOpenModal(y, m, key) {
   const unit = tcUnitLabel();
 
   document.getElementById('tcModalTitle').textContent = TC_MONTHS[m] + ' ' + y;
-  document.getElementById('tcModalSub').textContent   = key + (rec ? ' · Chỉnh sửa' : ' · Nhập mới');
+  document.getElementById('tcModalSub').textContent   = rec ? 'Chỉnh sửa' : 'Nhập mới';
   document.getElementById('tcLabelThu').textContent   = '💰 THU (' + unit + ')';
   document.getElementById('tcLabelChi').textContent   = '💸 CHI (' + unit + ')';
 
