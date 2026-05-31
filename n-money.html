@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 N-Money · Debt Tracker & Trading Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,600;0,6..12,700;1,6..12,300&display=swap" rel="stylesheet">
+<style>
+/* ══ DARK THEME ══════════════════════════════════════════════ */
+:root, [data-theme="dark"] {
+  --bg-0: #0c0e14;
+  --bg-1: #13161f;
+  --bg-2: #1a1e2a;
+  --bg-3: #212636;
+  --bg-card: #181b26;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.14);
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-dim: rgba(201,168,76,0.15);
+  --gold-dim2: rgba(201,168,76,0.08);
+  --text-primary: #eceef5;
+  --text-secondary: #8b90a8;
+  --text-muted: #555b72;
+  --red: #e05555;
+  --red-dim: rgba(224,85,85,0.12);
+  --amber: #e09a30;
+  --amber-dim: rgba(224,154,48,0.12);
+  --green: #4caf82;
+  --green-dim: rgba(76,175,130,0.12);
+  --blue: #5b8def;
+  --blue-dim: rgba(91,141,239,0.12);
+  --shadow-card: 0 2px 20px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 40px rgba(201,168,76,0.08);
+  --scrollbar-thumb: #212636;
+  /* Calendar cell colors */
+  --cal-surface: #1a1e2a;
+  --cal-surface2: #212636;
+  --cal-week-bg: #13161f;
+  --cal-week-bd: rgba(255,255,255,0.08);
+  --cal-green-bg: rgba(76,175,130,0.1);
+  --cal-green-bd: rgba(76,175,130,0.3);
+  --cal-red-bg: rgba(224,85,85,0.1);
+  --cal-red-bd: rgba(224,85,85,0.3);
+}
+
+/* ══ LIGHT THEME ════════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg-0: #f5f4ef;
+  --bg-1: #ffffff;
+  --bg-2: #f0ede6;
+  --bg-3: #e8e4db;
+  --bg-card: #ffffff;
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.16);
+  --gold: #a07830;
+  --gold-light: #c09040;
+  --gold-dim: rgba(160,120,48,0.12);
+  --gold-dim2: rgba(160,120,48,0.06);
+  --text-primary: #1a1a1a;
+  --text-secondary: #5a5a5a;
+  --text-muted: #9a9a9a;
+  --red: #c83030;
+  --red-dim: rgba(200,48,48,0.1);
+  --amber: #c07020;
+  --amber-dim: rgba(192,112,32,0.1);
+  --green: #2a8a5a;
+  --green-dim: rgba(42,138,90,0.1);
+  --blue: #2060c0;
+  --blue-dim: rgba(32,96,192,0.1);
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 30px rgba(160,120,48,0.12);
+  --scrollbar-thumb: #e0dbd0;
+  --cal-surface: #ffffff;
+  --cal-surface2: #f0ede6;
+  --cal-week-bg: #f5f4ef;
+  --cal-week-bd: rgba(0,0,0,0.08);
+  --cal-green-bg: rgba(42,138,90,0.08);
+  --cal-green-bd: rgba(42,138,90,0.3);
+  --cal-red-bg: rgba(200,48,48,0.08);
+  --cal-red-bd: rgba(200,48,48,0.3);
+}
+
+/* ══ BASE ════════════════════════════════════════════════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito Sans', sans-serif;
+  background: var(--bg-0);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  font-size: 15px;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ══ PAGE SHELL ══════════════════════════════════════════════ */
+.page-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 100vh;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  box-shadow: 0 0 48px rgba(0,0,0,0.15);
+  transition: border-color 0.3s;
+}
+
+/* ══ TOPBAR ══════════════════════════════════════════════════ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.1rem;
+  height: 52px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background 0.3s, border-color 0.3s;
+  gap: 8px;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ── Brand ── */
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+.brand-logo {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #c9a84c, #e8c97a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  box-shadow: 0 2px 12px rgba(201,168,76,0.35);
+  flex-shrink: 0; position: relative; overflow: hidden;
+}
+.brand-logo::after {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%);
+}
+.brand-name { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+
+/* ── Page Tabs ── */
+.page-tabs {
+  display: flex;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+}
+.page-tab {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.18s;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.page-tab.active {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0c0e14;
+  box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+}
+[data-theme="light"] .page-tab.active { color: #0c0e14; }
+.page-tab:not(.active):hover { color: var(--text-secondary); background: var(--bg-3); }
+
+/* ── Currency Toggle ── */
+.currency-toggle {
+  display: flex; align-items: center;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; padding: 2px; gap: 2px;
+}
+.currency-btn {
+  padding: 4px 9px; font-size: 11px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+  border: none; background: transparent; color: var(--text-muted);
+  border-radius: 6px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
+}
+.currency-btn.active { background: var(--gold); color: #fff; }
+[data-theme="light"] .currency-btn.active { color: #0c0e14; }
+
+/* ── Theme / Status buttons ── */
+.theme-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.2s; flex-shrink: 0;
+}
+.theme-btn:hover { border-color: var(--border-hover); background: var(--bg-3); }
+
+.api-status {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--text-secondary);
+  cursor: pointer; padding: 5px 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-2);
+  transition: all 0.2s; white-space: nowrap;
+}
+.api-status:hover { border-color: var(--border-hover); }
+
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+.dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot.err { background: var(--red); }
+.dot.spin { background: var(--gold); animation: dotPulse 1s infinite; }
+@keyframes dotPulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+/* ══ PAGE VIEWS ══════════════════════════════════════════════ */
+.page-view { display: none; }
+.page-view.active { display: block; }
+
+/* ══ DEBT TRACKER LAYOUT ═════════════════════════════════════ */
+#view-debt .dt-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 52px);
+}
+
+.sidebar {
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+  padding: 1.1rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+  height: calc(100vh - 52px);
+  position: sticky; top: 52px;
+  overflow-y: auto;
+  transition: background 0.3s, border-color 0.3s;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+
+.main {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  background: var(--bg-0);
+  transition: background 0.3s;
+}
+
+/* ── Upload zone ── */
+.upload-zone {
+  border: 1.5px dashed rgba(201,168,76,0.3);
+  border-radius: 10px; padding: 1.25rem 0.75rem;
+  text-align: center; cursor: pointer;
+  background: var(--gold-dim2); transition: all 0.2s;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: rgba(201,168,76,0.6); background: var(--gold-dim); }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; color: var(--text-secondary); }
+.upload-text b { color: var(--gold); font-weight: 600; }
+.upload-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── Thumb strip ── */
+.thumb-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.thumb {
+  position: relative; width: 68px; height: 68px;
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border); flex-shrink: 0;
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-del {
+  position: absolute; top: 3px; right: 3px;
+  background: rgba(0,0,0,0.7); border: none; border-radius: 50%;
+  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 10px;
+}
+.thumb-badge {
+  position: absolute; bottom: 3px; left: 3px;
+  font-size: 9px; padding: 1px 5px; border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600;
+}
+.thumb-badge.pending { background: rgba(255,255,255,0.15); color: #fff; }
+.thumb-badge.analyzing { background: rgba(91,141,239,0.85); color: #fff; }
+.thumb-badge.done { background: rgba(76,175,130,0.85); color: #fff; }
+.thumb-badge.error { background: rgba(224,85,85,0.85); color: #fff; }
+.thumb.error-state { border-color: rgba(224,85,85,0.5); }
+.thumb-retry {
+  position: absolute; top: 3px; left: 3px;
+  background: rgba(201,168,76,0.9); border: none; border-radius: 50%;
+  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #0c0e14; font-size: 11px; font-weight: 700; line-height: 1;
+}
+.thumb-retry:hover { background: rgba(201,168,76,1); }
+
+/* ── Buttons ── */
+.btn-primary {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #0c0e14; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 700; border: none; border-radius: 12px;
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(201,168,76,0.25);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.35); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-ghost {
+  padding: 6px 12px; background: transparent; color: var(--text-secondary);
+  font-family: 'Nunito Sans', sans-serif; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-ghost:hover { background: var(--bg-2); color: var(--text-primary); border-color: var(--border-hover); }
+.btn-ghost.danger:hover { color: var(--red); border-color: rgba(224,85,85,0.35); background: var(--red-dim); }
+
+/* ── Manual Entry ── */
+.manual-form { display: flex; flex-direction: column; gap: 8px; }
+.mini-input {
+  width: 100%; padding: 8px 10px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-primary);
+  font-family: 'Nunito Sans', sans-serif; font-size: 13px; outline: none;
+  transition: border-color 0.2s, background 0.3s;
+}
+.mini-input:focus { border-color: var(--gold); }
+.mini-input::placeholder { color: var(--text-muted); }
+.mini-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+/* ── Section Label ── */
+.section-label {
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;
+}
+
+/* ── Summary Grid ── */
+.summary-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem;
+}
+.metric-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1rem 1rem 0.85rem;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-card); transition: background 0.3s, border-color 0.3s;
+}
+.metric-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.metric-card.total::before { background: linear-gradient(90deg, var(--gold), transparent); }
+.metric-card.count::before { background: linear-gradient(90deg, var(--blue), transparent); }
+.metric-card.urgent::before { background: linear-gradient(90deg, var(--red), transparent); }
+.metric-card.ok::before { background: linear-gradient(90deg, var(--green), transparent); }
+.metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 8px; }
+.metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1.15; letter-spacing: -0.02em; }
+.metric-value.gold { color: var(--gold); }
+.metric-value.sm { font-size: 17px; padding-top: 4px; font-weight: 700; }
+.metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── Cards list ── */
+.cards-list { display: flex; flex-direction: column; gap: 8px; }
+.card-item {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1rem 1.1rem;
+  flex-direction: column; display: flex;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
+  box-shadow: var(--shadow-card);
+  animation: fadeUp 0.3s ease both;
+}
+.card-item:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.card-left { flex: 1; min-width: 0; }
+.card-bank-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.bank-avatar {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 11px;
+  flex-shrink: 0; letter-spacing: 0.01em;
+}
+.card-bank { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.card-type-tag { font-size: 11px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--bg-3); color: var(--text-secondary); letter-spacing: 0.02em; }
+.card-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.badge-urgent { background: var(--red-dim); color: var(--red); border: 1px solid rgba(224,85,85,0.2); }
+.badge-warn { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(224,154,48,0.2); }
+.badge-ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(76,175,130,0.2); }
+.card-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; font-style: italic; }
+.card-actions { display: flex; gap: 6px; margin-top: 10px; }
+.card-right { text-align: right; flex-shrink: 0; }
+.card-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); white-space: nowrap; letter-spacing: -0.02em; }
+.card-amount-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; }
+.card-item-row { display: flex; align-items: flex-start; gap: 1rem; width: 100%; }
+
+/* ── Progress ── */
+.progress-wrap { margin-top: 1.5rem; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+.progress-bar-bg { height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+/* ── Empty State ── */
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+.empty-icon { font-size: 48px; margin-bottom: 1rem; opacity: 0.4; }
+.empty-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-sub { font-size: 13px; line-height: 1.8; }
+
+/* ── Adjust Section ── */
+.adjust-section {
+  padding: 9px 12px; background: rgba(255,255,255,0.03);
+  border-radius: 8px; border: 1px solid var(--border); width: 100%;
+}
+[data-theme="light"] .adjust-section { background: rgba(0,0,0,0.025); }
+.adjust-title { font-size: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 7px; }
+.adjust-row1 { display: grid; grid-template-columns: 138px 1fr 1fr auto; gap: 6px; align-items: center; }
+.adjust-input { padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px; color: var(--text-primary); font-family: 'Nunito Sans', sans-serif; font-size: 13px; outline: none; width: 100%; transition: border-color 0.2s, background 0.3s; }
+.adjust-input:focus { border-color: var(--gold); }
+.adjust-input::placeholder { color: var(--text-muted); font-size: 12px; }
+.btn-adjust { padding: 6px 16px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border: none; border-radius: 7px; color: #0c0e14; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: filter 0.15s; }
+.btn-adjust:hover { filter: brightness(1.08); }
+.adj-date-btn { display: none; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 16px; transition: border-color 0.2s; }
+.adj-date-btn:hover { border-color: var(--gold); }
+.adj-date-hidden { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+
+/* ── TX History ── */
+.tx-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.tx-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); padding: 4px 0; border-bottom: 1px solid var(--border); }
+.tx-item:last-child { border-bottom: none; }
+.tx-date { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+.tx-amt { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; white-space: nowrap; }
+.tx-amt.pos { color: var(--red); }
+.tx-amt.neg { color: var(--green); }
+.tx-note { flex: 1; color: var(--text-secondary); font-style: italic; }
+.tx-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 0 2px; }
+.tx-del:hover { color: var(--red); }
+
+/* ── Bank logo ── */
+.bank-logo-img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; display: block; }
+.bank-logo-img.hidden { display: none; }
+
+/* ── Rate bar ── */
+.rate-bar { background: var(--gold-dim2); border: 1px solid var(--gold-dim); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.rate-bar:hover { background: var(--gold-dim); }
+.rate-val { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: var(--gold); font-size: 12px; }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--border); margin: 0; transition: background 0.3s; }
+
+/* ══ TRADING CALENDAR ════════════════════════════════════════ */
+#view-calendar {
+  padding: 0;
+}
+.cal-wrap { padding: 8px 12px 16px; }
+
+/* Stats bar (calendar header inner) */
+.cal-statsbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+}
+.cal-nav-group { display: flex; align-items: center; gap: 4px; flex: 1; }
+.cal-nav-btn {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text-secondary);
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.cal-nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+.cal-month-label { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary); white-space: nowrap; min-width: 130px; }
+.cal-today-btn {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text-secondary);
+  padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
+  white-space: nowrap; transition: all 0.15s; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.cal-today-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+.cal-pill {
+  padding: 4px 14px; border-radius: 20px; font-size: 15px; font-weight: 800;
+  font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap;
+  border: 1px solid var(--cal-green-bd); background: var(--cal-green-bg); color: var(--green);
+}
+.cal-pill.neg { background: var(--red-dim); border-color: rgba(224,85,85,0.2); color: var(--red); }
+.cal-pill.zero { background: var(--bg-2); border-color: var(--border); color: var(--text-muted); font-size: 13px; }
+.cal-days-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* Calendar grid */
+.cal-heads { display: grid; grid-template-columns: repeat(7,1fr) 80px; gap: 3px; margin-bottom: 3px; padding: 0 0; }
+.cal-head-cell { text-align: center; padding: 5px 1px; font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif; }
+.cal-week-row { display: grid; grid-template-columns: repeat(7,1fr) 80px; gap: 3px; margin-bottom: 3px; }
+
+/* Day cell */
+.dc {
+  background: var(--cal-surface); border: 1px solid var(--border);
+  border-radius: 6px; min-height: 76px; padding: 6px;
+  cursor: pointer; transition: background 0.1s, border-color 0.1s;
+  display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+}
+.dc:hover:not(.oth) { border-color: var(--border-hover); background: var(--cal-surface2); }
+.dc.oth { opacity: 0.15; cursor: default; pointer-events: none; }
+.dc.wknd { background: var(--cal-surface2); }
+.dc.tod { border-color: var(--gold) !important; box-shadow: 0 0 0 1px var(--gold); }
+.dc.pro { background: var(--cal-green-bg); border-color: var(--cal-green-bd); }
+.dc.pro:hover { filter: brightness(1.08); }
+.dc.los { background: var(--cal-red-bg); border-color: var(--cal-red-bd); }
+.dc.los:hover { filter: brightness(1.08); }
+
+.dc-num { font-size: 10px; font-weight: 500; color: var(--text-muted); text-align: right; margin-bottom: 1px; line-height: 1; }
+.dc-badge { background: var(--gold); color: #0c0e14; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; margin-left: auto; }
+.dc-pnl { font-size: 13px; font-weight: 700; margin-top: auto; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif; }
+.dc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-note { font-size: 9px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; opacity: 0.85; }
+.cal-pos { color: var(--green); }
+.cal-neg { color: var(--red); }
+.cal-zer { color: var(--text-muted); }
+
+/* Week cell */
+.wc {
+  background: var(--cal-week-bg); border: 1px solid var(--cal-week-bd);
+  border-radius: 6px; padding: 5px 6px; min-height: 76px;
+  display: flex; flex-direction: column; justify-content: center; overflow: hidden; min-width: 0;
+}
+.wc-lbl { font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; }
+.wc-pnl { font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.wc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
+.wc-days { font-size: 9px; color: var(--text-muted); white-space: nowrap; }
+
+/* ══ MODALS ══════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--bg-2); border: 1px solid var(--border-hover);
+  border-radius: 20px; padding: 2rem; width: 100%; max-width: 440px;
+  transform: scale(0.96); transition: transform 0.2s, background 0.3s;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+.modal-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; }
+.input-group { margin-bottom: 1rem; }
+.input-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; display: block; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.input-field { width: 100%; padding: 10px 14px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: monospace; font-size: 14px; outline: none; transition: border-color 0.2s, background 0.3s; }
+.input-field:focus { border-color: var(--gold); }
+.modal-actions { display: flex; gap: 8px; margin-top: 1.5rem; }
+.btn-modal-cancel { flex: 1; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 12px; color: var(--text-secondary); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.btn-modal-cancel:hover { background: var(--bg-3); }
+.btn-modal-save { flex: 2; padding: 10px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border: none; border-radius: 12px; color: #0c0e14; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.btn-modal-save:hover { filter: brightness(1.05); }
+.edit-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.edit-modal-grid .full { grid-column: 1 / -1; }
+
+/* Calendar day modal */
+.cal-modal-bg {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.75); align-items: center; justify-content: center; padding: 16px;
+}
+.cal-modal-bg.open { display: flex; }
+.cal-modal-box {
+  background: var(--bg-2); border: 1px solid var(--border-hover);
+  border-radius: 16px; width: 100%; max-width: 340px; padding: 22px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.65);
+}
+.cal-modal-field {
+  width: 100%; background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-primary); padding: 10px 12px;
+  font-size: 16px; outline: none; font-family: 'Nunito Sans', sans-serif;
+  margin-bottom: 8px; display: block; transition: border-color 0.2s;
+}
+.cal-modal-field:focus { border-color: var(--gold); }
+.cal-modal-preview { text-align: center; font-size: 20px; font-weight: 700; min-height: 28px; margin-bottom: 16px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.cal-sync-msg { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 9px; min-height: 14px; }
+.cal-btn-save {
+  width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none; color: #0c0e14; padding: 11px; border-radius: 9px;
+  cursor: pointer; font-size: 13px; font-weight: 700; margin-bottom: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif; transition: filter 0.15s;
+}
+.cal-btn-save:hover { filter: brightness(1.05); }
+.cal-btn-clear {
+  width: 100%; background: none; border: 1px solid var(--border);
+  color: var(--text-muted); padding: 9px; border-radius: 9px;
+  cursor: pointer; font-size: 12px; font-family: 'Nunito Sans', sans-serif;
+  transition: all 0.15s;
+}
+.cal-btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+/* ══ SPINNER ═════════════════════════════════════════════════ */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(12,14,20,0.3); border-top-color: #0c0e14; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══ TOAST ═══════════════════════════════════════════════════ */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg-card); border: 1px solid var(--border-hover);
+  border-radius: 12px; padding: 10px 18px;
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  z-index: 300; opacity: 0; transition: all 0.25s;
+  pointer-events: none; white-space: nowrap; max-width: calc(100vw - 2rem);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: rgba(76,175,130,0.4); color: var(--green); }
+.toast.error { border-color: rgba(224,85,85,0.4); color: var(--red); }
+
+/* ══ SCROLLBAR ═══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+
+/* ══ UTIL ════════════════════════════════════════════════════ */
+.hidden { display: none !important; }
+.mt-1 { margin-top: 0.75rem; }
+
+/* ══ RESPONSIVE ══════════════════════════════════════════════ */
+@media (max-width: 960px) {
+  .page-shell { border-left: none; border-right: none; box-shadow: none; }
+}
+@media (max-width: 768px) {
+  .topbar { padding: 0 0.85rem; height: 48px; }
+  .brand-logo { width: 28px; height: 28px; font-size: 14px; }
+  .brand-name { font-size: 12px; }
+  .page-tab { padding: 4px 9px; font-size: 11px; }
+  .currency-btn { padding: 3px 7px; font-size: 10px; }
+  .theme-btn { width: 30px; height: 30px; font-size: 14px; }
+  /* Debt tracker mobile: sidebar below main */
+  #view-debt .dt-layout { grid-template-columns: 1fr; }
+  .main { order: 1; padding: 0.85rem; }
+  .sidebar { order: 2; height: auto; position: static; border-right: none; border-top: 1px solid var(--border); padding: 0.85rem; }
+  .summary-grid { grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 1rem; }
+  .metric-card { padding: 0.6rem 0.6rem 0.5rem; border-radius: 10px; }
+  .metric-value { font-size: 15px; }
+  .metric-value.sm { font-size: 12px; }
+  .metric-label { font-size: 9px; margin-bottom: 3px; }
+  .metric-sub { font-size: 10px; }
+  .card-item { padding: 0.8rem; border-radius: 10px; }
+  .card-amount { font-size: 20px; }
+  .bank-avatar { width: 34px; height: 34px; font-size: 11px; }
+  .card-bank { font-size: 15px; }
+  #apiStatusText { display: none; }
+  .mini-input-row { grid-template-columns: 1fr; }
+  .adjust-row1 { grid-template-columns: 1fr 1fr auto auto; gap: 6px; }
+  .adjust-row1 .adj-date { display: none; }
+  .adjust-row1 .adj-date-btn { display: flex; }
+  /* Calendar mobile */
+  .cal-statsbar { padding: 7px 10px; gap: 7px; }
+  .cal-month-label { font-size: 12px; min-width: 110px; }
+  .cal-days-label { display: none; }
+  .cal-wrap { padding: 5px 6px 12px; }
+  .cal-heads { grid-template-columns: repeat(7,1fr) 60px; gap: 2px; }
+  .cal-week-row { grid-template-columns: repeat(7,1fr) 60px; gap: 2px; }
+  .dc { min-height: 54px; padding: 3px 3px; }
+  .dc-num { font-size: 9px; }
+  .dc-pnl { font-size: 11px; }
+  .dc-pnl2 { display: none; }
+  .dc-note { display: none; }
+  .wc { min-height: 54px; padding: 3px 4px; }
+  .wc-lbl { font-size: 6px; }
+  .wc-pnl { font-size: 10px; }
+  .wc-pnl2 { display: none; }
+  .wc-days { font-size: 7px; }
+  .cal-head-cell { font-size: 8px; padding: 4px 0; }
+}
+@media (max-width: 480px) {
+  .topbar { gap: 5px; }
+  .topbar-right { gap: 5px; }
+  /* Hide sync text on small screens */
+  #syncStatusText { display: none; }
+  .page-tab { padding: 4px 7px; font-size: 10px; }
+}
+@media (max-width: 360px) {
+  .cal-heads { grid-template-columns: repeat(7,1fr) 48px; gap: 1px; }
+  .cal-week-row { grid-template-columns: repeat(7,1fr) 48px; gap: 1px; }
+  .dc { min-height: 44px; padding: 2px; }
+  .wc { min-height: 44px; padding: 2px 3px; }
+  .wc-days { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ MODALS (Debt Tracker) ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Sửa thông tin thẻ</div>
+    <div class="edit-modal-grid">
+      <div class="input-group full"><label class="input-label">Ngân hàng</label><input class="input-field" id="editBank" placeholder="Techcombank"></div>
+      <div class="input-group"><label class="input-label">Dư nợ (VNĐ)</label><input class="input-field" id="editAmount" type="number" placeholder="95000000"></div>
+      <div class="input-group"><label class="input-label">Hạn thanh toán</label><input class="input-field" id="editDue" placeholder="15/06"></div>
+      <div class="input-group"><label class="input-label">Loại thẻ</label><input class="input-field" id="editType" placeholder="Visa / Mastercard"></div>
+      <div class="input-group"><label class="input-label">Tối thiểu (VNĐ)</label><input class="input-field" id="editMin" type="number" placeholder="0"></div>
+      <div class="input-group full"><label class="input-label">Ghi chú</label><input class="input-field" id="editNote" placeholder="Ghi chú tuỳ chọn"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeEditModal()">Hủy</button>
+      <button class="btn-modal-save" onclick="saveEdit()">💾 Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="syncModal">
+  <div class="modal">
+    <div class="modal-title">☁️ Đồng bộ dữ liệu</div>
+    <div class="modal-sub">Đặt một <b>Mã đồng bộ</b> bất kỳ. Dùng cùng mã trên laptop, PC, điện thoại — tất cả dùng chung 1 dữ liệu.</div>
+    <div class="input-group">
+      <label class="input-label">Mã đồng bộ (tự đặt)</label>
+      <input class="input-field" id="syncCodeInput" type="text" placeholder="vd: nam2026, mydebt..." autocomplete="off" spellcheck="false" style="font-size:16px;letter-spacing:0.05em">
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);line-height:1.7">⚠️ Ai biết mã này đều xem được dữ liệu. Đổi mã = mất liên kết dữ liệu cũ trên cloud.</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeSyncModal()">Hủy</button>
+      <button class="btn-modal-save" onclick="saveSyncCode()">💾 Lưu & đồng bộ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <div class="modal-title">🔑 Nhập Anthropic API Key</div>
+    <div class="modal-sub">Key lưu trong <b>trình duyệt của bạn</b> (localStorage), không gửi đi đâu ngoài Anthropic.</div>
+    <div style="background:var(--red-dim);border:1px solid rgba(224,85,85,0.25);border-radius:8px;padding:10px 12px;margin-bottom:1rem;font-size:12px;color:var(--red);line-height:1.6">
+      ⚠️ <b>Không nhúng key vào file HTML rồi đăng lên GitHub!</b> Anthropic tự động quét và thu hồi key bị lộ.
+    </div>
+    <div class="input-group">
+      <label class="input-label" for="apiKeyInput">Anthropic API Key</label>
+      <input class="input-field" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+    </div>
+    <div style="font-size:12px;color:var(--text-muted)">Tạo key tại <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--gold);text-decoration:none">console.anthropic.com/keys</a></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeApiModal()">Bỏ qua</button>
+      <button class="btn-modal-save" onclick="saveApiKey()">💾 Lưu & dùng ngay</button>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar day modal -->
+<div class="cal-modal-bg" id="calModalBg">
+  <div class="cal-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif" id="calModalTitle"></div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px" id="calModalSub"></div>
+      </div>
+      <button onclick="calCloseModal()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0 3px;line-height:1">&#x2715;</button>
+    </div>
+    <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">P&L (<span id="calModeLabel">USD</span>)</label>
+    <input id="calPnlInput" type="number" step="0.01" autocomplete="off" placeholder="+ lãi  /  − lỗ" class="cal-modal-field">
+    <div class="cal-modal-preview cal-zer" id="calPnlPreview"></div>
+    <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">Ghi chú</label>
+    <input id="calNoteInput" type="text" autocomplete="off" placeholder="Sự kiện, nhận xét..." class="cal-modal-field">
+    <button class="cal-btn-save" id="calSaveBtn">Lưu</button>
+    <button class="cal-btn-clear" id="calClearBtn">Xóa ngày này</button>
+    <div class="cal-sync-msg" id="calSyncMsg"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ PAGE SHELL ════════════════════════════════════════════════ -->
+<div class="page-shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a class="topbar-brand" href="#">
+        <div class="brand-logo">💰</div>
+        <span class="brand-name">N-Money</span>
+      </a>
+      <!-- Page Tabs -->
+      <div class="page-tabs">
+        <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt Tracker</button>
+        <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading Calendar</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <!-- Currency Toggle (shared) -->
+      <div class="currency-toggle" title="Chọn đơn vị tiền tệ">
+        <button class="currency-btn active" id="btnVND" onclick="setCurrency('VND')">VNĐ</button>
+        <button class="currency-btn" id="btnUSD" onclick="setCurrency('USD')">USD</button>
+      </div>
+      <!-- Theme -->
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Sáng/Tối">☀️</button>
+      <!-- Sync -->
+      <div class="api-status" id="syncStatusBtn" onclick="openSyncModal()" title="Đồng bộ cloud">
+        <div class="dot" id="syncDot"></div>
+        <span id="syncStatusText">Chưa đồng bộ</span>
+      </div>
+      <!-- API -->
+      <div class="api-status" id="apiStatusBtn" onclick="openApiModal()">
+        <div class="dot" id="apiDot"></div>
+        <span id="apiStatusText">API</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ DEBT TRACKER VIEW ════════════════════════════════════ -->
+  <div class="page-view active" id="view-debt">
+    <div class="dt-layout">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div>
+          <div class="section-label">📸 Upload ảnh sao kê</div>
+          <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleDrop(event)">
+            <div class="upload-icon">📲</div>
+            <div class="upload-text"><b>Chọn ảnh</b> hoặc kéo vào đây</div>
+            <div class="upload-hint">App ngân hàng · SMS · Sao kê · JPG/PNG</div>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+        </div>
+        <div id="thumbSection" class="hidden">
+          <div class="section-label">Ảnh đã chọn (<span id="thumbCount">0</span>)</div>
+          <div class="thumb-strip" id="thumbStrip"></div>
+        </div>
+        <button class="btn-primary" id="analyzeBtn" onclick="analyzeAll()" disabled>
+          <span>✨ Phân tích bằng AI</span>
+        </button>
+        <div class="divider"></div>
+        <div>
+          <button class="btn-ghost" id="manualToggleBtn" onclick="toggleManualForm()"
+            style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font-size:13px;font-weight:600;">
+            <span>✏️ Nhập thủ công</span>
+            <span id="manualToggleArrow" style="font-size:11px;transition:transform 0.2s">▼</span>
+          </button>
+          <div class="manual-form" id="manualForm" style="display:none;margin-top:8px">
+            <input class="mini-input" id="mBank" placeholder="Ngân hàng (vd: Techcombank)">
+            <div class="mini-input-row">
+              <input class="mini-input" id="mAmount" placeholder="Dư nợ (VNĐ)">
+              <input class="mini-input" id="mDue" placeholder="Hạn DD/MM">
+            </div>
+            <div class="mini-input-row">
+              <input class="mini-input" id="mType" placeholder="Loại (Visa/MC...)">
+              <input class="mini-input" id="mMin" placeholder="Tối thiểu">
+            </div>
+            <input class="mini-input" id="mNote" placeholder="Ghi chú (tuỳ chọn)">
+            <button class="btn-primary" onclick="addManual()" style="margin-top:2px"><span>＋ Thêm thẻ</span></button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="rate-bar" onclick="fetchRate()" id="rateBar">
+          <span>💱</span><span>1 USD =</span>
+          <span class="rate-val" id="rateVal">đang tải...</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--text-muted)">↻</span>
+        </div>
+        <div>
+          <div class="section-label">Hướng dẫn</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;display:flex;flex-direction:column;gap:8px">
+            <div>① Upload ảnh chụp màn hình dư nợ từ app ngân hàng</div>
+            <div>② Nhấn <b style="color:var(--gold)">Phân tích bằng AI</b> để trích xuất</div>
+            <div>③ Hoặc nhập thủ công vào form phía trên</div>
+            <div>④ Dữ liệu tự động lưu, mở lại vẫn còn</div>
+          </div>
+        </div>
+        <div style="margin-top:auto;padding-top:0.5rem">
+          <button class="btn-ghost danger" style="width:100%" onclick="clearAllCards()">🗑 Xóa tất cả thẻ</button>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+        <div class="summary-grid">
+          <div class="metric-card total"><div class="metric-label">Tổng dư nợ</div><div class="metric-value gold sm" id="totalAmount">—</div><div class="metric-sub" id="totalSub">Chưa có dữ liệu</div></div>
+          <div class="metric-card count"><div class="metric-label">Số thẻ</div><div class="metric-value" id="cardCount">0</div><div class="metric-sub" id="cardCountSub">thẻ đang theo dõi</div></div>
+          <div class="metric-card ok" id="urgentCard"><div class="metric-label">Hạn gần nhất</div><div class="metric-value sm" id="urgentVal">—</div><div class="metric-sub" id="urgentSub">Không có</div></div>
+        </div>
+        <div id="cardListWrap">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">💳</div>
+            <div class="empty-title">Chưa có dữ liệu</div>
+            <div class="empty-sub">Upload ảnh sao kê thẻ tín dụng<br>hoặc nhập thủ công để bắt đầu.</div>
+          </div>
+          <div class="cards-list hidden" id="cardsList"></div>
+        </div>
+        <div id="progressWrap" class="hidden" style="margin-top:1rem">
+          <div class="section-label">Tỉ trọng dư nợ</div>
+          <div id="progressBars" style="display:flex;flex-direction:column;gap:12px"></div>
+        </div>
+      </main>
+    </div>
+  </div><!-- /view-debt -->
+
+  <!-- ═══ TRADING CALENDAR VIEW ════════════════════════════════ -->
+  <div class="page-view" id="view-calendar">
+    <!-- Stats bar -->
+    <div class="cal-statsbar">
+      <div class="cal-nav-group">
+        <button class="cal-nav-btn" id="calBtnPrev">&#8249;</button>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <button class="cal-nav-btn" id="calBtnNext">&#8250;</button>
+        <button class="cal-today-btn" id="calBtnToday">Tháng này</button>
+      </div>
+      <span class="cal-pill zero" id="calStatsPill">$0</span>
+      <span class="cal-days-label" id="calStatsDays">0 ngày</span>
+      <div class="dot" id="calSyncDot"></div>
+    </div>
+    <!-- Calendar body -->
+    <div class="cal-wrap">
+      <div class="cal-heads">
+        <div class="cal-head-cell">T2</div>
+        <div class="cal-head-cell">T3</div>
+        <div class="cal-head-cell">T4</div>
+        <div class="cal-head-cell">T5</div>
+        <div class="cal-head-cell">T6</div>
+        <div class="cal-head-cell">T7</div>
+        <div class="cal-head-cell">CN</div>
+        <div class="cal-head-cell">W</div>
+      </div>
+      <div id="calBody"></div>
+    </div>
+  </div><!-- /view-calendar -->
+
+</div><!-- /page-shell -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONSTANTS & SHARED STATE
+// ══════════════════════════════════════════════════════════════
+const STORAGE_KEY    = 'debt_tracker_v2_state';
+const API_KEY_STORE  = 'debt_tracker_api_key';
+const THEME_KEY      = 'debt_tracker_theme';
+const CURRENCY_KEY   = 'debt_tracker_currency';
+const RATE_KEY       = 'debt_tracker_usd_rate';
+const SYNC_CODE_KEY  = 'debt_tracker_sync_code';
+const PAGE_KEY       = 'nmoney_active_page';
+
+// Supabase (Debt Tracker project — single source of truth)
+const SB_URL = 'https://qjvkuokbmwhazzlkfikl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdmt1b2tibXdoYXp6bGtmaWtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTgyNDYsImV4cCI6MjA5NTU5NDI0Nn0.AT-QyWlPnwy32WebC5T5SEJc9t2LVTS4_XMg_yEPFQk';
+const sb     = supabase.createClient(SB_URL, SB_KEY);
+const CAL_TABLE = 'trading_calendar';
+
+let syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
+let currency = localStorage.getItem(CURRENCY_KEY) || 'VND';
+let usdRate  = parseFloat(localStorage.getItem(RATE_KEY)) || 25400;
+let apiKey   = localStorage.getItem(API_KEY_STORE) || '';
+let activePage = localStorage.getItem(PAGE_KEY) || 'debt';
+
+// ══════════════════════════════════════════════════════════════
+// PAGE SWITCH
+// ══════════════════════════════════════════════════════════════
+function switchPage(page) {
+  activePage = page;
+  localStorage.setItem(PAGE_KEY, page);
+  document.getElementById('view-debt').classList.toggle('active', page === 'debt');
+  document.getElementById('view-calendar').classList.toggle('active', page === 'calendar');
+  document.getElementById('tabDebt').classList.toggle('active', page === 'debt');
+  document.getElementById('tabCalendar').classList.toggle('active', page === 'calendar');
+  if (page === 'calendar') { calInit(); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(saved, false);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+function applyTheme(theme, save=true) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+  if (save) localStorage.setItem(THEME_KEY, theme);
+}
+
+// ══════════════════════════════════════════════════════════════
+// CURRENCY (shared — affects both pages)
+// ══════════════════════════════════════════════════════════════
+function setCurrency(c) {
+  currency = c;
+  localStorage.setItem(CURRENCY_KEY, c);
+  document.getElementById('btnVND').classList.toggle('active', c === 'VND');
+  document.getElementById('btnUSD').classList.toggle('active', c === 'USD');
+  // Refresh calendar mode label
+  document.getElementById('calModeLabel').textContent = c;
+  calCurMode = c;
+  renderDashboard();
+  if (activePage === 'calendar') calRender();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SYNC / API STATUS (Debt Tracker)
+// ══════════════════════════════════════════════════════════════
+function updateSyncStatus() {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncStatusText');
+  if (syncCode) { dot.className = 'dot ok'; txt.textContent = '☁ ' + syncCode; }
+  else          { dot.className = 'dot';    txt.textContent = 'Chưa đồng bộ'; }
+}
+function openSyncModal() {
+  document.getElementById('syncCodeInput').value = syncCode;
+  document.getElementById('syncModal').classList.add('open');
+}
+function closeSyncModal() { document.getElementById('syncModal').classList.remove('open'); }
+async function saveSyncCode() {
+  const val = document.getElementById('syncCodeInput').value.trim();
+  if (!val) { showToast('Vui lòng nhập mã đồng bộ', 'error'); return; }
+  syncCode = val;
+  localStorage.setItem(SYNC_CODE_KEY, syncCode);
+  updateSyncStatus();
+  closeSyncModal();
+  showToast('⏳ Đang tải dữ liệu từ cloud...', '');
+  await loadState();
+}
+document.getElementById('syncModal').addEventListener('click', function(e) { if(e.target===this) closeSyncModal(); });
+
+function updateApiStatus() {
+  const dot = document.getElementById('apiDot');
+  const txt = document.getElementById('apiStatusText');
+  if (apiKey && apiKey.startsWith('sk-')) { dot.className = 'dot ok'; txt.textContent = 'API ✓'; }
+  else { dot.className = 'dot err'; txt.textContent = 'API'; }
+}
+function openApiModal() {
+  document.getElementById('apiKeyInput').value = apiKey;
+  document.getElementById('apiModal').classList.add('open');
+}
+function closeApiModal() { document.getElementById('apiModal').classList.remove('open'); }
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { showToast('Vui lòng nhập API Key', 'error'); return; }
+  apiKey = val;
+  localStorage.setItem(API_KEY_STORE, apiKey);
+  updateApiStatus();
+  closeApiModal();
+  showToast('Đã lưu API Key ✓', 'success');
+}
+document.getElementById('apiModal').addEventListener('click', function(e) { if(e.target===this) closeApiModal(); });
+
+// ══════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXCHANGE RATE
+// ══════════════════════════════════════════════════════════════
+async function fetchRate() {
+  document.getElementById('rateVal').textContent = 'đang tải...';
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (r.ok) { const d = await r.json(); usdRate = d.rates?.VND || usdRate; }
+    else {
+      const r2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      if (r2.ok) { const d2 = await r2.json(); usdRate = d2.rates?.VND || usdRate; }
+    }
+  } catch(e) {}
+  localStorage.setItem(RATE_KEY, usdRate.toString());
+  document.getElementById('rateVal').textContent = new Intl.NumberFormat('vi-VN').format(Math.round(usdRate)) + ' ₫';
+  renderDashboard();
+  if (activePage === 'calendar') calRender();
+}
+
+// ══════════════════════════════════════════════════════════════
+// FORMATTING (shared)
+// ══════════════════════════════════════════════════════════════
+function fmtVND(n) { if(!n&&n!==0)return'—'; return new Intl.NumberFormat('vi-VN').format(Math.round(n))+' ₫'; }
+function fmtVND_M(n) { if(!n&&n!==0)return'—'; const m=n/1_000_000; return (m%1===0?m.toFixed(0):m.toFixed(1))+' tr₫'; }
+function fmtUSD_full(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; return '$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.round(usd)); }
+function fmtUSD_K(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; if(usd>=1000)return'$'+(usd/1000).toFixed(1)+'K'; return'$'+Math.round(usd); }
+function fmt(n)  { return currency==='USD'?fmtUSD_full(n):fmtVND(n); }
+function fmtM(n) { return currency==='USD'?fmtUSD_K(n):fmtVND_M(n); }
+function fmtBoth(n) { if(currency==='USD')return fmtUSD_full(n)+' ('+fmtVND_M(n)+')'; return fmtVND_M(n)+' ('+fmtUSD_K(n)+')'; }
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const p = dateStr.split('/');
+  if (p.length < 2) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const year = today.getFullYear();
+  let d = new Date(year, parseInt(p[1])-1, parseInt(p[0]));
+  if (d < today) d = new Date(year+1, parseInt(p[1])-1, parseInt(p[0]));
+  return Math.ceil((d-today)/86400000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// BANK COLORS
+// ══════════════════════════════════════════════════════════════
+const BANK_DATA = {
+  'techcombank':{bg:'#e8151d22',fg:'#e8151d',text:'TCB',domain:'techcombank.com.vn'},
+  'uob':{bg:'#0055b322',fg:'#0055b3',text:'UOB',domain:'uob.com.vn'},
+  'vietcombank':{bg:'#00713622',fg:'#009b4e',text:'VCB',domain:'vietcombank.com.vn'},
+  'vietinbank':{bg:'#e8151d22',fg:'#e03030',text:'VTB',domain:'vietinbank.vn'},
+  'bidv':{bg:'#1e4d9222',fg:'#2e6bdb',text:'BID',domain:'bidv.com.vn'},
+  'mbbank':{bg:'#2979ff22',fg:'#2979ff',text:'MB',domain:'mbbank.com.vn'},
+  'mb bank':{bg:'#2979ff22',fg:'#2979ff',text:'MB',domain:'mbbank.com.vn'},
+  'vpbank':{bg:'#ff680022',fg:'#ff6800',text:'VPB',domain:'vpbank.com.vn'},
+  'tpbank':{bg:'#e8151d22',fg:'#e0263a',text:'TPB',domain:'tpbank.vn'},
+  'hdbank':{bg:'#ffc10722',fg:'#e09000',text:'HDB',domain:'hdbank.com.vn'},
+  'sacombank':{bg:'#1e9d5522',fg:'#1e9d55',text:'STB',domain:'sacombank.com'},
+  'acb':{bg:'#1e4d9222',fg:'#1e5fd6',text:'ACB',domain:'acb.com.vn'},
+  'agribank':{bg:'#e8151d22',fg:'#d42b2b',text:'AGB',domain:'agribank.com.vn'},
+  'shinhan':{bg:'#0057a822',fg:'#0057a8',text:'SHB',domain:'shinhan.com.vn'},
+  'hsbc':{bg:'#db000022',fg:'#db0000',text:'HSB',domain:'hsbc.com.vn'},
+  'standard chartered':{bg:'#00875522',fg:'#008755',text:'SCB',domain:'sc.com'},
+  'citibank':{bg:'#0571c422',fg:'#0571c4',text:'CTI',domain:'citibank.com.vn'},
+  'ocb':{bg:'#f5820022',fg:'#f58200',text:'OCB',domain:'ocb.com.vn'},
+  'msb':{bg:'#0033a022',fg:'#0033a0',text:'MSB',domain:'msb.com.vn'},
+  'seabank':{bg:'#ee8b0022',fg:'#ee8b00',text:'SEA',domain:'seabank.com.vn'},
+  'ncb':{bg:'#0055b322',fg:'#0055b3',text:'NCB',domain:'ncb-bank.vn'},
+  'abbank':{bg:'#e8151d22',fg:'#e8151d',text:'ABB',domain:'abbank.vn'},
+  'vib':{bg:'#7c3aed22',fg:'#7c3aed',text:'VIB',domain:'vib.com.vn'},
+  'shb':{bg:'#e8151d22',fg:'#cc0000',text:'SHB',domain:'shb.com.vn'},
+  'pvcombank':{bg:'#0055b322',fg:'#0055b3',text:'PVC',domain:'pvcombank.com.vn'},
+  'bac a bank':{bg:'#1e9d5522',fg:'#1e9d55',text:'BAB',domain:'bacabank.vn'},
+};
+const PALETTE = [
+  {bg:'#c9a84c22',fg:'#c9a84c'},{bg:'#5b8def22',fg:'#5b8def'},
+  {bg:'#4caf8222',fg:'#4caf82'},{bg:'#e0553522',fg:'#e05535'},{bg:'#a78bfa22',fg:'#a78bfa'},
+];
+let paletteIdx = 0;
+function getBankStyle(bankName) {
+  const key = (bankName||'').toLowerCase();
+  for (const k in BANK_DATA) { if(key.includes(k)) return BANK_DATA[k]; }
+  const c = PALETTE[paletteIdx%PALETTE.length]; paletteIdx++;
+  const abbr = (bankName||'??').replace(/[^A-Za-zÀ-ỹ]/g,'').substring(0,3).toUpperCase()||'??';
+  return {bg:c.bg,fg:c.fg,text:abbr,domain:null};
+}
+function bankLogoUrl(domain) {
+  if (!domain) return null;
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUPABASE — DEBT TRACKER
+// ══════════════════════════════════════════════════════════════
+let _saveTimer = null;
+const state = { images: [], cards: [] };
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({cards:state.cards,savedAt:new Date().toISOString()})); } catch(e) {}
+  if (!syncCode) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveToSupabase, 800);
+}
+
+async function saveToSupabase() {
+  if (!syncCode) return;
+  try {
+    const rows = state.cards.map(c => {
+      if (!c._key) c._key = c.bank+'_'+(c._createdAt||(c._createdAt=Date.now()));
+      return { sync_code:syncCode, card_key:c._key, bank:c.bank||'', amount:c.amount||0, due_date:c.dueDate||null, card_type:c.cardType||null, min_payment:c.minPayment||null, note:c.note||null, transactions:c.transactions||[] };
+    });
+    await sb.from('debt_cards').upsert(rows, {onConflict:'sync_code,card_key'});
+    updateSyncStatus();
+  } catch(e) { console.warn('Supabase save error:', e); }
+}
+
+async function loadState() {
+  const local = localStorage.getItem(STORAGE_KEY);
+  if (local) { try { const p=JSON.parse(local); if(p.cards) state.cards=p.cards; } catch(e){} }
+  if (!syncCode) { renderDashboard(); return; }
+  try {
+    const {data,error} = await sb.from('debt_cards').select('*').eq('sync_code',syncCode);
+    if (!error && data && data.length) {
+      state.cards = data.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
+    }
+  } catch(e) { console.warn('Supabase load error:', e); }
+  renderDashboard();
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILE HANDLING (AI analysis)
+// ══════════════════════════════════════════════════════════════
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => { state.images.push({dataUrl:e.target.result,file,status:'pending'}); renderThumbs(); renderAnalyzeBtn(); };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('fileInput').value = '';
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+}
+function removeImage(i) { state.images.splice(i,1); renderThumbs(); renderAnalyzeBtn(); }
+function retryImage(i) { state.images[i].status='pending'; renderThumbs(); renderAnalyzeBtn(); }
+
+function renderThumbs() {
+  const section=document.getElementById('thumbSection');
+  const strip=document.getElementById('thumbStrip');
+  const count=document.getElementById('thumbCount');
+  if (!state.images.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  count.textContent = state.images.length;
+  strip.innerHTML = state.images.map((img,i) => `
+    <div class="thumb${img.status==='error'?' error-state':''}">
+      <img src="${img.dataUrl}" alt="">
+      <button class="thumb-del" onclick="removeImage(${i})">✕</button>
+      ${img.status==='error'?`<button class="thumb-retry" onclick="retryImage(${i})" title="Thử lại">↺</button>`:''}
+      <span class="thumb-badge ${img.status}">${img.status==='pending'?'chờ':img.status==='analyzing'?'...':img.status==='done'?'✓':'!'}</span>
+    </div>`).join('');
+}
+
+function renderAnalyzeBtn() {
+  const btn=document.getElementById('analyzeBtn');
+  const pending=state.images.filter(i=>i.status==='pending'||i.status==='error').length;
+  btn.disabled=!pending;
+  btn.innerHTML=pending?`<span>✨ Phân tích bằng AI${pending>1?' ('+pending+')':''}</span>`:`<span>✨ Phân tích bằng AI</span>`;
+}
+
+async function analyzeAll() {
+  if (!apiKey||!apiKey.startsWith('sk-')) { openApiModal(); return; }
+  const pending = state.images.filter(i=>i.status==='pending'||i.status==='error');
+  if (!pending.length) return;
+  for (const img of pending) {
+    img.status='analyzing'; renderThumbs();
+    try {
+      const b64 = img.dataUrl.split(',')[1];
+      const mtype = img.dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body: JSON.stringify({model:'claude-opus-4-5',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mtype,data:b64}},{type:'text',text:`Phân tích ảnh sao kê / thẻ tín dụng này. Trả về JSON: {"bank":"tên ngân hàng","amount":số_tiền_VND_integer,"dueDate":"DD/MM hoặc null","cardType":"loại thẻ hoặc null","minPayment":số_tiền_VND_hoặc_null,"note":"ghi chú ngắn hoặc null"}. Chỉ trả JSON, không giải thích.`}]}]})
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      const text = (data.content||[]).map(b=>b.text||'').join('');
+      const clean = text.replace(/```json|```/g,'').trim();
+      const parsed = JSON.parse(clean);
+      state.cards.push({bank:parsed.bank||'Ngân hàng',amount:parsed.amount||0,dueDate:parsed.dueDate||null,cardType:parsed.cardType||null,minPayment:parsed.minPayment||null,note:parsed.note||null,transactions:[],_style:getBankStyle(parsed.bank||'')});
+      img.status='done';
+      saveState(); renderDashboard();
+    } catch(e) { img.status='error'; console.warn('Analyze error:',e); }
+    renderThumbs();
+  }
+  showToast('✓ Phân tích xong', 'success');
+}
+
+// ══════════════════════════════════════════════════════════════
+// MANUAL ENTRY
+// ══════════════════════════════════════════════════════════════
+function toggleManualForm() {
+  const form=document.getElementById('manualForm');
+  const arrow=document.getElementById('manualToggleArrow');
+  const open = form.style.display==='none';
+  form.style.display = open?'flex':'none';
+  arrow.style.transform = open?'rotate(180deg)':'';
+}
+
+function parseCommaNum(str) {
+  if (!str) return NaN;
+  return parseFloat(str.toString().replace(/,/g,'').replace(/\./g,'').trim());
+}
+
+function addManual() {
+  const bank = document.getElementById('mBank').value.trim();
+  const amount = parseCommaNum(document.getElementById('mAmount').value) || 0;
+  const dueDate = document.getElementById('mDue').value.trim()||null;
+  const cardType = document.getElementById('mType').value.trim()||null;
+  const minPayment = parseCommaNum(document.getElementById('mMin').value)||null;
+  const note = document.getElementById('mNote').value.trim()||null;
+  if (!bank) { showToast('Nhập tên ngân hàng', 'error'); return; }
+  state.cards.push({bank,amount,dueDate,cardType,minPayment,note,transactions:[],_style:getBankStyle(bank)});
+  document.getElementById('mBank').value='';
+  document.getElementById('mAmount').value='';
+  document.getElementById('mDue').value='';
+  document.getElementById('mType').value='';
+  document.getElementById('mMin').value='';
+  document.getElementById('mNote').value='';
+  saveState(); renderDashboard();
+  showToast('✓ Đã thêm '+bank, 'success');
+}
+
+function fmtInputComma(el) {
+  const v = el.value.replace(/[^\d-]/g,'');
+  el.value = v;
+}
+function attachCommaInputs() {
+  document.querySelectorAll('.adj-amt').forEach(el => el.addEventListener('input', () => fmtInputComma(el)));
+}
+
+// ══════════════════════════════════════════════════════════════
+// EDIT CARD MODAL
+// ══════════════════════════════════════════════════════════════
+let editIdx = -1;
+function openEditModal(i) {
+  editIdx = i;
+  const c = state.cards[i];
+  document.getElementById('editBank').value = c.bank||'';
+  document.getElementById('editAmount').value = c.amount||0;
+  document.getElementById('editDue').value = c.dueDate||'';
+  document.getElementById('editType').value = c.cardType||'';
+  document.getElementById('editMin').value = c.minPayment||'';
+  document.getElementById('editNote').value = c.note||'';
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEditModal() { document.getElementById('editModal').classList.remove('open'); editIdx=-1; }
+function saveEdit() {
+  if (editIdx<0) return;
+  const c = state.cards[editIdx];
+  c.bank = document.getElementById('editBank').value.trim()||c.bank;
+  c.amount = parseFloat(document.getElementById('editAmount').value)||c.amount;
+  c.dueDate = document.getElementById('editDue').value.trim()||null;
+  c.cardType = document.getElementById('editType').value.trim()||null;
+  c.minPayment = parseFloat(document.getElementById('editMin').value)||null;
+  c.note = document.getElementById('editNote').value.trim()||null;
+  c._style = getBankStyle(c.bank);
+  saveState(); renderDashboard();
+  closeEditModal();
+  showToast('✓ Đã lưu thay đổi', 'success');
+}
+document.getElementById('editModal').addEventListener('click', function(e) { if(e.target===this) closeEditModal(); });
+
+// ══════════════════════════════════════════════════════════════
+// ADJUST / TRANSACTIONS
+// ══════════════════════════════════════════════════════════════
+function applyAdjust(i) {
+  const dateEl  = document.getElementById(`adj-date-${i}`);
+  const dateHidden = document.getElementById(`adj-date-hidden-${i}`);
+  const amtEl   = document.getElementById(`adj-amt-${i}`);
+  const noteEl  = document.getElementById(`adj-note-${i}`);
+  const amount  = parseCommaNum(amtEl.value);
+  if (!amount||isNaN(amount)) { showToast('Nhập số tiền +/- cần điều chỉnh','error'); return; }
+  const date = dateEl.value||dateHidden?.value||new Date().toISOString().split('T')[0];
+  const note = noteEl.value.trim()||'';
+  const c = state.cards[i];
+  c.amount = (c.amount||0)+amount;
+  if (!c.transactions) c.transactions=[];
+  c.transactions.unshift({date,amount,note});
+  amtEl.value='';
+  saveState(); renderDashboard();
+  showToast(`${amount>=0?'▲':'▼'} Đã điều chỉnh ${fmtVND_M(Math.abs(amount))}`,'success');
+}
+function deleteTx(cardIdx, txIdx) {
+  const c = state.cards[cardIdx];
+  if (!c.transactions) return;
+  const tx = c.transactions[txIdx];
+  c.amount -= tx.amount;
+  c.transactions.splice(txIdx,1);
+  saveState(); renderDashboard();
+  showToast('Đã xóa giao dịch','success');
+}
+function removeCard(i) { state.cards.splice(i,1); saveState(); renderDashboard(); showToast('Đã xóa thẻ','success'); }
+function clearAllCards() {
+  if (!state.cards.length) return;
+  if (!confirm('Xóa tất cả '+state.cards.length+' thẻ?')) return;
+  state.cards=[];
+  saveState(); renderDashboard();
+  showToast('Đã xóa tất cả','success');
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER DASHBOARD
+// ══════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const cards=state.cards, total=cards.reduce((s,c)=>s+(c.amount||0),0), n=cards.length;
+  const totalEl=document.getElementById('totalAmount'), totalSub=document.getElementById('totalSub');
+  if (n) { totalEl.textContent=fmtM(total); totalSub.textContent=currency==='VND'?fmtUSD_K(total):fmtVND_M(total); }
+  else { totalEl.textContent='—'; totalSub.textContent='Chưa có dữ liệu'; }
+  document.getElementById('cardCount').textContent=n;
+  document.getElementById('cardCountSub').textContent='thẻ đang theo dõi';
+  let minDays=null, minCard=null;
+  cards.forEach(c => { const d=daysUntil(c.dueDate); if(d!==null&&(minDays===null||d<minDays)){minDays=d;minCard=c;} });
+  const urgentCard=document.getElementById('urgentCard'), urgentVal=document.getElementById('urgentVal'), urgentSub=document.getElementById('urgentSub');
+  if (minCard) {
+    urgentVal.textContent=minDays+' ngày'; urgentSub.textContent=`Hạn ${minCard.dueDate} · ${minCard.bank}`;
+    if(minDays<=3){urgentCard.className='metric-card urgent';urgentVal.style.color='var(--red)';}
+    else if(minDays<=7){urgentCard.className='metric-card';urgentVal.style.color='var(--amber)';}
+    else{urgentCard.className='metric-card ok';urgentVal.style.color='var(--green)';}
+  } else { urgentVal.textContent='—'; urgentSub.textContent='Không có'; urgentCard.className='metric-card ok'; urgentVal.style.color=''; }
+  const emptyState=document.getElementById('emptyState'), cardsList=document.getElementById('cardsList'), progressWrap=document.getElementById('progressWrap');
+  if (!n) { emptyState.classList.remove('hidden'); cardsList.classList.add('hidden'); progressWrap.classList.add('hidden'); return; }
+  emptyState.classList.add('hidden'); cardsList.classList.remove('hidden');
+  const sorted=[...cards].map((c,origIdx)=>({...c,_origIdx:origIdx})).sort((a,b)=>(b.amount||0)-(a.amount||0));
+  cardsList.innerHTML = sorted.map(c => {
+    const i=c._origIdx, s=c._style||getBankStyle(c.bank||'??'), days=daysUntil(c.dueDate), logoUrl=bankLogoUrl(s.domain);
+    const pct=total?Math.round((c.amount/total)*100):0;
+    const amtMain=fmtM(c.amount), amtAlt=currency==='USD'?fmtVND_M(c.amount):fmtUSD_K(c.amount);
+    let dueBadge='';
+    if (c.dueDate) {
+      if(days!==null) {
+        if(days<=3) dueBadge=`<span class="badge badge-urgent">⚡ Hạn ${c.dueDate} · ${days} ngày</span>`;
+        else if(days<=7) dueBadge=`<span class="badge badge-warn">⏰ Hạn ${c.dueDate} · ${days} ngày</span>`;
+        else dueBadge=`<span class="badge badge-ok">📅 Hạn ${c.dueDate} · ${days} ngày</span>`;
+      } else dueBadge=`<span class="badge badge-ok">📅 Hạn ${c.dueDate}</span>`;
+    }
+    const txs=c.transactions||[];
+    const txHtml=txs.length?`<div class="tx-list">${txs.map((tx,ti)=>`<div class="tx-item"><span class="tx-date">${tx.date}</span><span class="tx-amt ${tx.amount>=0?'pos':'neg'}">${tx.amount>=0?'+':''}${fmtVND_M(tx.amount)}</span><span class="tx-note">${tx.note||'—'}</span><button class="tx-del" onclick="deleteTx(${i},${ti})" title="Xóa">✕</button></div>`).join('')}</div>`:'';
+    return `
+    <div class="card-item" style="animation-delay:${sorted.indexOf(c)*0.05}s">
+      <div class="card-item-row">
+        <div class="card-left">
+          <div class="card-bank-row">
+            <div class="bank-avatar" style="background:${s.bg};color:${s.fg}">
+              ${logoUrl?`<img class="bank-logo-img" src="${logoUrl}" alt="${s.text}" onerror="this.classList.add('hidden');this.nextElementSibling.style.display='flex'" onload="this.nextElementSibling.style.display='none'"><span style="display:none">${s.text}</span>`:s.text}
+            </div>
+            <div><div class="card-bank">${c.bank}</div>${c.cardType?`<span class="card-type-tag">${c.cardType}</span>`:''}</div>
+          </div>
+          ${dueBadge?`<div class="card-badges" style="margin-top:6px">${dueBadge}</div>`:''}
+          ${c.note?`<div class="card-note" style="margin-top:6px">${c.note}</div>`:''}
+          <div class="progress-wrap" style="margin-top:10px">
+            <div class="progress-label"><span style="font-size:13px">Tỉ trọng</span><span style="font-size:13px">${pct}%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${s.fg},${s.fg}88)"></div></div>
+          </div>
+          <div class="card-actions" style="margin-top:10px">
+            <button class="btn-ghost" onclick="openEditModal(${i})">✏️ Sửa</button>
+            <button class="btn-ghost danger" onclick="removeCard(${i})">🗑 Xóa</button>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="card-amount" style="color:${s.fg}">${amtMain}</div>
+          <div class="card-amount-sub">${amtAlt}</div>
+        </div>
+      </div>
+      <div class="adjust-section" style="margin-top:6px">
+        <div class="adjust-title">± Điều chỉnh dư nợ</div>
+        <div class="adjust-row1">
+          <input class="adjust-input adj-date" id="adj-date-${i}" type="date" value="${new Date().toISOString().split('T')[0]}">
+          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="numeric" placeholder="+/- Số tiền (VNĐ)" oninput="fmtInputComma(this)">
+          <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
+          <button class="adj-date-btn" title="Chọn ngày" onclick="document.getElementById('adj-date-hidden-${i}').showPicker?.()">📅</button>
+          <input class="adj-date-hidden" id="adj-date-hidden-${i}" type="date" value="${new Date().toISOString().split('T')[0]}" onchange="document.getElementById('adj-date-${i}').value=this.value">
+          <button class="btn-adjust adj-btn" onclick="applyAdjust(${i})">Lưu</button>
+        </div>
+        ${txHtml}
+      </div>
+    </div>`;
+  }).join('');
+  if (n>=2) {
+    progressWrap.classList.remove('hidden');
+    document.getElementById('progressBars').innerHTML = cards.map(c => {
+      const s=c._style||getBankStyle(c.bank); const pct=total?Math.round((c.amount/total)*100):0;
+      return `<div><div class="progress-label"><span style="font-size:12px">${c.bank}</span><span style="font-size:12px">${fmtM(c.amount)} · ${pct}%</span></div><div class="progress-bar-bg" style="height:6px"><div class="progress-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${s.fg},${s.fg}88)"></div></div></div>`;
+    }).join('');
+  } else progressWrap.classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════════════════════
+// TRADING CALENDAR
+// ══════════════════════════════════════════════════════════════
+const CAL_MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const CAL_DNAMES = ['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'];
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+let calData = {}, calSelKey = null, calCurMode = currency;
+let calLoaded = false;
+
+const calDk = (y,m,d) => `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const calTodayKey = () => { const t=new Date(); return calDk(t.getFullYear(),t.getMonth(),t.getDate()); };
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+// Supabase REST for calendar (using fetch directly for simplicity, same project as debt tracker)
+async function calSbReq(path, opts={}) {
+  const r = await fetch(SB_URL + path, {
+    headers: {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json',...(opts.headers||{})},
+    ...opts
+  });
+  if (r.status===204) return null;
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function calSetSync(state) {
+  document.getElementById('calSyncDot').className = 'dot '+(state||'');
+}
+
+async function calLoadMonth() {
+  calSetSync('spin');
+  const from=calDk(calY,calM,1), to=calDk(calY,calM,new Date(calY,calM+1,0).getDate());
+  try {
+    const rows = await calSbReq(`/rest/v1/${CAL_TABLE}?date=gte.${from}&date=lte.${to}&select=date,pnl,note`);
+    if (rows) rows.forEach(r => { calData[r.date]={pnl:r.pnl,note:r.note||''}; });
+    calSetSync('ok');
+  } catch(e) { calSetSync('err'); console.warn(e); }
+}
+
+async function calSaveRecord(key, usdVal, note) {
+  try {
+    await calSbReq(`/rest/v1/${CAL_TABLE}?on_conflict=date`, {
+      method:'POST', headers:{'Prefer':'resolution=merge-duplicates'},
+      body: JSON.stringify({date:key, pnl:usdVal===null?null:+parseFloat(usdVal).toFixed(6), note:note||''})
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+async function calDelRecord(key) {
+  try { await calSbReq(`/rest/v1/${CAL_TABLE}?date=eq.${key}`,{method:'DELETE'}); return true; }
+  catch(e) { return false; }
+}
+
+// P&L formatting for calendar
+const calGetFx = () => usdRate;
+const calToUSD = v => { const n=parseFloat(v); return isNaN(n)?null:(calCurMode==='VND'?n/calGetFx():n); };
+const calToDisp = usd => { if(usd==null||usd==='')return''; const n=parseFloat(usd); return isNaN(n)?'':(calCurMode==='VND'?+(n*calGetFx()).toFixed(0):n); };
+
+function calFmtUSD(usd, full=false) {
+  if(usd==null||usd==='')return''; const n=parseFloat(usd); if(isNaN(n))return''; if(n===0)return'$0';
+  const s=n>0?'+$':'-$',a=Math.abs(n);
+  if(full)return s+a.toLocaleString('en-US',{minimumFractionDigits:a%1===0?0:2,maximumFractionDigits:2});
+  if(a>=1e6)return s+(a/1e6).toFixed(2)+'M';
+  if(a>=1000)return s+(a/1000).toFixed(a>=10000?1:2)+'K';
+  return s+(a%1===0?a.toFixed(0):a.toFixed(1));
+}
+function calFmtVND_r(usd, full=false) {
+  if(usd==null||usd==='')return''; const n=parseFloat(usd)*calGetFx(); if(isNaN(n))return''; if(n===0)return'0';
+  const sign=n>0?'+':'-',a=Math.abs(n);
+  if(full)return sign+a.toLocaleString('vi-VN')+' ₫';
+  if(a>=1e9){const v=a/1e9;return sign+(v%1===0?v.toFixed(0):v.toFixed(2))+' tỷ';}
+  if(a>=1e6){const v=a/1e6;return sign+(v%1===0?v.toFixed(0):v.toFixed(1))+' triệu';}
+  if(a>=1e3){const v=a/1e3;return sign+v.toFixed(0)+' nghìn';}
+  return sign+a.toFixed(0)+' ₫';
+}
+const calFmtP = (usd, full=false) => calCurMode==='VND' ? calFmtVND_r(usd,full) : calFmtUSD(usd,full);
+
+function calRender() {
+  const tk = calTodayKey();
+  document.getElementById('calMonthLabel').textContent = CAL_MONTHS[calM]+' '+calY;
+  const firstDow = new Date(calY,calM,1).getDay();
+  const off = firstDow===0?6:firstDow-1;
+  const dim = new Date(calY,calM+1,0).getDate();
+  let mPnl=0, mDays=0;
+  for (let d=1;d<=dim;d++) { const r=calData[calDk(calY,calM,d)]; if(r&&r.pnl!=null&&r.pnl!==''){mPnl+=parseFloat(r.pnl);mDays++;} }
+  const pill=document.getElementById('calStatsPill');
+  pill.textContent = mDays>0?(calFmtP(mPnl)||'$0'):'$0';
+  pill.className = 'cal-pill '+(mDays===0?'zero':mPnl>=0?'':'neg');
+  document.getElementById('calStatsDays').textContent = mDays+' ngày';
+  const body = document.getElementById('calBody');
+  body.innerHTML = '';
+  const nw = Math.ceil((off+dim)/7);
+  for (let w=0;w<nw;w++) {
+    const row = document.createElement('div');
+    row.className = 'cal-week-row';
+    let wPnl=0, wDays=0;
+    for (let col=0;col<7;col++) {
+      const idx=w*7+col, dayNum=idx-off+1;
+      const cell=document.createElement('div');
+      if (dayNum<1||dayNum>dim) {
+        cell.className='dc oth';
+        const pm=new Date(calY,calM,0);
+        const g=dayNum<1?pm.getDate()-(off-1-idx):dayNum-dim;
+        cell.innerHTML=`<div class="dc-num">${g}</div>`;
+        row.appendChild(cell); continue;
+      }
+      const key=calDk(calY,calM,dayNum),rec=calData[key];
+      const isToday=key===tk,isWk=col>=5;
+      const hasPnl=rec&&rec.pnl!=null&&rec.pnl!=='';
+      const pv=hasPnl?parseFloat(rec.pnl):null;
+      if(hasPnl){wPnl+=pv;wDays++;}
+      let cls='dc';
+      if(isWk)cls+=' wknd'; if(isToday)cls+=' tod';
+      if(hasPnl&&pv>0)cls+=' pro'; else if(hasPnl&&pv<0)cls+=' los';
+      cell.className=cls;
+      const numH=isToday?`<div style="display:flex;justify-content:flex-end"><div class="dc-badge">${dayNum}</div></div>`:`<div class="dc-num">${dayNum}</div>`;
+      let inner=numH;
+      if(hasPnl){
+        const c=pv>0?'cal-pos':pv<0?'cal-neg':'cal-zer';
+        inner+=`<div class="dc-pnl ${c}">${calFmtP(pv)}</div>`;
+      }
+      if(rec&&rec.note)inner+=`<div class="dc-note">${escHtml(rec.note)}</div>`;
+      cell.innerHTML=inner;
+      const _key=key,_d=dayNum;
+      cell.addEventListener('click',()=>calOpenModal(calY,calM,_d,_key));
+      row.appendChild(cell);
+    }
+    const wc=document.createElement('div');
+    wc.className='wc';
+    if(wDays>0){
+      const c=wPnl>0?'cal-pos':wPnl<0?'cal-neg':'cal-zer';
+      wc.innerHTML=`<div class="wc-lbl">T${w+1}</div><div class="wc-pnl ${c}">${calFmtP(wPnl)}</div><div class="wc-days">${wDays}d</div>`;
+    } else {
+      wc.innerHTML=`<div class="wc-lbl">T${w+1}</div><div class="wc-pnl cal-zer" style="font-size:10px">—</div>`;
+    }
+    row.appendChild(wc);
+    body.appendChild(row);
+  }
+}
+
+function calOpenModal(y,m,d,key) {
+  calSelKey=key;
+  const dow=new Date(y,m,d).getDay(),di=dow===0?6:dow-1;
+  document.getElementById('calModalTitle').textContent=CAL_DNAMES[di]+', '+String(d).padStart(2,'0')+'/'+String(m+1).padStart(2,'0')+'/'+y;
+  document.getElementById('calModalSub').textContent=key;
+  document.getElementById('calModeLabel').textContent=calCurMode;
+  const rec=calData[key]||{};
+  const disp=calToDisp(rec.pnl);
+  const inp=document.getElementById('calPnlInput');
+  inp.value=disp!==''&&disp!=null?disp:'';
+  document.getElementById('calNoteInput').value=rec.note||'';
+  document.getElementById('calSyncMsg').textContent='';
+  calUpdPrev();
+  document.getElementById('calModalBg').classList.add('open');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>inp.focus()));
+}
+function calCloseModal() { document.getElementById('calModalBg').classList.remove('open'); calSelKey=null; }
+
+function calUpdPrev() {
+  const v=document.getElementById('calPnlInput').value;
+  const el=document.getElementById('calPnlPreview');
+  if(v===''||v==null){el.innerHTML='';el.className='cal-modal-preview cal-zer';return;}
+  const n=parseFloat(v);if(isNaN(n)){el.innerHTML='';return;}
+  const usd=calToUSD(n);
+  el.innerHTML=calFmtP(usd,true);
+  el.className='cal-modal-preview '+(n>0?'cal-pos':n<0?'cal-neg':'cal-zer');
+}
+document.getElementById('calPnlInput').addEventListener('input', calUpdPrev);
+
+document.getElementById('calSaveBtn').addEventListener('click', async () => {
+  if(!calSelKey)return;
+  const raw=document.getElementById('calPnlInput').value;
+  const note=document.getElementById('calNoteInput').value.trim();
+  const usdVal=raw===''?null:calToUSD(parseFloat(raw));
+  const msg=document.getElementById('calSyncMsg');
+  msg.textContent='Đang lưu...'; calSetSync('spin');
+  const ok=await calSaveRecord(calSelKey,usdVal,note);
+  calData[calSelKey]={pnl:usdVal,note};
+  msg.textContent=ok?'✓ Đã lưu & đồng bộ':'⚠ Local only';
+  calSetSync(ok?'ok':'err');
+  calRender(); setTimeout(calCloseModal,450);
+});
+
+document.getElementById('calClearBtn').addEventListener('click', async () => {
+  if(!calSelKey)return;
+  document.getElementById('calSyncMsg').textContent='Đang xóa...';
+  await calDelRecord(calSelKey); delete calData[calSelKey]; calRender(); setTimeout(calCloseModal,350);
+});
+
+document.getElementById('calModalBg').addEventListener('click', e => { if(e.target===document.getElementById('calModalBg'))calCloseModal(); });
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') { calCloseModal(); closeEditModal(); closeApiModal(); closeSyncModal(); }
+  if(e.key==='Enter'&&document.getElementById('calModalBg').classList.contains('open')) { e.preventDefault(); document.getElementById('calSaveBtn').click(); }
+});
+
+document.getElementById('calBtnPrev').addEventListener('click', () => { calM--; if(calM<0){calM=11;calY--;} calInit(); });
+document.getElementById('calBtnNext').addEventListener('click', () => { calM++; if(calM>11){calM=0;calY++;} calInit(); });
+document.getElementById('calBtnToday').addEventListener('click', () => { const t=new Date(); calY=t.getFullYear(); calM=t.getMonth(); calInit(); });
+
+async function calInit() { calRender(); await calLoadMonth(); calRender(); }
+
+// ══════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════
+initTheme();
+setCurrency(currency);
+updateApiStatus();
+updateSyncStatus();
+renderDashboard();
+fetchRate();
+attachCommaInputs();
+loadState();
+
+// Restore last active page
+switchPage(activePage);
+</script>
+</body>
+</html>
