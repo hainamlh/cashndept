@@ -624,7 +624,131 @@ body {
 .hidden { display: none !important; }
 .mt-1 { margin-top: 0.75rem; }
 
-/* ══ RESPONSIVE ══════════════════════════════════════════════ */
+/* ══ THU CHI ════════════════════════════════════════════════ */
+.tc-wrap {
+  padding: 12px 14px 28px;
+}
+
+/* Quarter block: label + 3 month cards + summary card */
+.tc-quarter-block {
+  margin-bottom: 14px;
+}
+.tc-quarter-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tc-quarter-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+
+.tc-quarter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 88px;
+  gap: 6px;
+}
+
+/* Month card */
+.tc-month-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.2s;
+  box-shadow: var(--shadow-card);
+  position: relative; overflow: hidden;
+}
+.tc-month-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: transparent;
+  transition: background 0.2s;
+}
+.tc-month-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+.tc-month-card.has-data::before { background: linear-gradient(90deg, var(--gold), transparent); }
+.tc-month-card.net-pos::before  { background: linear-gradient(90deg, var(--green), transparent); }
+.tc-month-card.net-neg::before  { background: linear-gradient(90deg, var(--red), transparent); }
+.tc-month-card.is-current { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.tc-month-card.is-future  { opacity: 0.4; cursor: default; pointer-events: none; }
+
+.tc-card-month {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.04em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.tc-card-month.is-current-lbl { color: var(--gold); }
+
+.tc-card-row {
+  display: flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 3px;
+}
+.tc-card-row:last-child { margin-bottom: 0; }
+
+.tc-lbl {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.tc-lbl-thu { color: var(--green); }
+.tc-lbl-chi { color: var(--red); }
+.tc-lbl-net { color: var(--text-muted); }
+
+.tc-amt {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 700;
+  white-space: nowrap;
+}
+.tc-amt.thu-c  { color: var(--green); }
+.tc-amt.chi-c  { color: var(--red); }
+.tc-amt.net-p  { color: var(--green); }
+.tc-amt.net-n  { color: var(--red); }
+.tc-amt.muted  { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+
+.tc-divider {
+  height: 1px; background: var(--border);
+  margin: 5px 0;
+}
+
+/* Quarter summary card */
+.tc-q-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 10px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+}
+.tc-q-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 9px; font-weight: 800;
+  color: var(--gold); letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.tc-q-row {
+  display: flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 3px;
+}
+.tc-q-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.tc-q-val {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.tc-q-val.thu-c { color: var(--green); }
+.tc-q-val.chi-c { color: var(--red); }
+.tc-q-val.net-p { color: var(--green); }
+.tc-q-val.net-n { color: var(--red); }
+.tc-q-val.muted { color: var(--text-muted); font-weight: 400; font-size: 11px; }
+
+
 @media (max-width: 960px) {
   .page-shell { border-left: none; border-right: none; box-shadow: none; }
 }
@@ -676,7 +800,16 @@ body {
   .adjust-row1 .adj-date { display: none; }
   .adjust-row1 .adj-date-btn { display: flex; }
 
-  /* ── Calendar mobile: full-width scroll ── */
+  /* ── Thu Chi mobile ── */
+  .tc-wrap { padding: 10px 10px 20px; }
+  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 76px; gap: 5px; }
+  .tc-month-card { padding: 8px 9px; border-radius: 8px; }
+  .tc-card-month { font-size: 10px; margin-bottom: 6px; }
+  .tc-amt { font-size: 11px; }
+  .tc-lbl { font-size: 9px; }
+  .tc-q-card { padding: 8px 8px; border-radius: 8px; }
+  .tc-q-val { font-size: 11px; }
+  .tc-q-lbl { font-size: 8px; }
   #view-calendar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cal-statsbar { padding: 7px 10px; gap: 7px; flex-wrap: nowrap; }
   .cal-nav-group { gap: 4px; }
@@ -814,6 +947,7 @@ body {
       <div class="page-tabs">
         <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt Tracker</button>
         <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading Calendar</button>
+        <button class="page-tab" id="tabThuChi" onclick="switchPage('thuchi')">📊 Thu Chi</button>
       </div>
     </div>
     <div class="topbar-right">
@@ -955,6 +1089,64 @@ body {
     </div>
   </div><!-- /view-calendar -->
 
+  <!-- ═══ THU CHI VIEW ════════════════════════════════════════ -->
+  <div class="page-view" id="view-thuchi">
+    <!-- Stats bar -->
+    <div class="cal-statsbar" style="flex-wrap:wrap;gap:10px;height:auto;padding:10px 14px">
+      <div class="cal-nav-group" style="flex:none">
+        <button class="cal-nav-btn" id="tcBtnPrev">&#8249;</button>
+        <span class="cal-month-label" id="tcYearLabel" style="min-width:56px;text-align:center;font-size:15px;font-weight:800"></span>
+        <button class="cal-nav-btn" id="tcBtnNext">&#8250;</button>
+        <button class="cal-today-btn" id="tcBtnNow">Năm này</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-left:auto">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+          <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Tổng thu</span>
+          <span id="tcYearThu" style="font-size:15px;font-weight:800;color:var(--green);font-family:'Plus Jakarta Sans',sans-serif;line-height:1">—</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+          <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Tổng chi</span>
+          <span id="tcYearChi" style="font-size:15px;font-weight:800;color:var(--red);font-family:'Plus Jakarta Sans',sans-serif;line-height:1">—</span>
+        </div>
+        <div style="width:1px;height:30px;background:var(--border)"></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+          <span style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Net năm</span>
+          <span id="tcYearNet" class="cal-pill zero" style="font-size:13px;padding:2px 10px;line-height:1.4">—</span>
+        </div>
+        <div class="dot" id="tcSyncDot"></div>
+      </div>
+    </div>
+    <!-- 4 Quarter blocks, each with 3 month cards + 1 quarter summary -->
+    <div class="tc-wrap" id="tcBody"></div>
+  </div><!-- /view-thuchi -->
+
+  <!-- Thu Chi Modal -->
+  <div class="cal-modal-bg" id="tcModalBg">
+    <div class="cal-modal-box" style="max-width:360px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif" id="tcModalTitle"></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px" id="tcModalSub"></div>
+        </div>
+        <button onclick="tcCloseModal()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0 3px;line-height:1">&#x2715;</button>
+      </div>
+      <!-- Thu -->
+      <label style="display:block;font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelThu">💰 THU</label>
+      <input id="tcThuInput" type="number" step="0.01" autocomplete="off" placeholder="0" class="cal-modal-field" style="border-color:rgba(76,175,130,0.3)">
+      <!-- Chi -->
+      <label style="display:block;font-size:9px;font-weight:700;color:var(--red);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelChi">💸 CHI</label>
+      <input id="tcChiInput" type="number" step="0.01" autocomplete="off" placeholder="0" class="cal-modal-field" style="border-color:rgba(224,85,85,0.3)">
+      <!-- Net preview -->
+      <div id="tcNetPreview" style="text-align:center;font-size:18px;font-weight:800;min-height:30px;margin-bottom:16px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-muted)"></div>
+      <!-- Note -->
+      <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px">Ghi chú</label>
+      <input id="tcNoteInput" type="text" autocomplete="off" placeholder="Sự kiện, nhận xét..." class="cal-modal-field">
+      <button class="cal-btn-save" id="tcSaveBtn">Lưu tháng này</button>
+      <button class="cal-btn-clear" id="tcClearBtn">Xóa dữ liệu tháng</button>
+      <div class="cal-sync-msg" id="tcSyncMsg"></div>
+    </div>
+  </div>
+
 </div><!-- /page-shell -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -990,9 +1182,12 @@ function switchPage(page) {
   localStorage.setItem(PAGE_KEY, page);
   document.getElementById('view-debt').classList.toggle('active', page === 'debt');
   document.getElementById('view-calendar').classList.toggle('active', page === 'calendar');
+  document.getElementById('view-thuchi').classList.toggle('active', page === 'thuchi');
   document.getElementById('tabDebt').classList.toggle('active', page === 'debt');
   document.getElementById('tabCalendar').classList.toggle('active', page === 'calendar');
-  if (page === 'calendar') { calInit(); }
+  document.getElementById('tabThuChi').classList.toggle('active', page === 'thuchi');
+  if (page === 'calendar') calInit();
+  if (page === 'thuchi') tcInit();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1020,11 +1215,11 @@ function setCurrency(c) {
   localStorage.setItem(CURRENCY_KEY, c);
   document.getElementById('btnVND').classList.toggle('active', c === 'VND');
   document.getElementById('btnUSD').classList.toggle('active', c === 'USD');
-  // Refresh calendar mode label
   document.getElementById('calModeLabel').textContent = c;
   calCurMode = c;
   renderDashboard();
   if (activePage === 'calendar') calRender();
+  if (activePage === 'thuchi')   tcRender();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1708,8 +1903,9 @@ document.getElementById('calClearBtn').addEventListener('click', async () => {
 document.getElementById('calModalBg').addEventListener('click', e => { if(e.target===document.getElementById('calModalBg'))calCloseModal(); });
 
 document.addEventListener('keydown', e => {
-  if(e.key==='Escape') { calCloseModal(); closeEditModal(); closeApiModal(); closeSyncModal(); }
+  if(e.key==='Escape') { calCloseModal(); closeEditModal(); closeApiModal(); closeSyncModal(); tcCloseModal(); }
   if(e.key==='Enter'&&document.getElementById('calModalBg').classList.contains('open')) { e.preventDefault(); document.getElementById('calSaveBtn').click(); }
+  if(e.key==='Enter'&&document.getElementById('tcModalBg').classList.contains('open')) { e.preventDefault(); document.getElementById('tcSaveBtn').click(); }
 });
 
 document.getElementById('calBtnPrev').addEventListener('click', () => { calM--; if(calM<0){calM=11;calY--;} calInit(); });
@@ -1721,6 +1917,329 @@ async function calInit() {
   calRender();
   await calLoadMonth();  // then sync from server
   calRender();
+}
+
+// ══════════════════════════════════════════════════════════════
+// THU CHI
+// ══════════════════════════════════════════════════════════════
+const TC_TABLE   = 'thu_chi';
+const TC_LS_KEY  = 'nmoney_thuchi_data';
+const TC_MONTHS  = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                    'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+let tcYear = new Date().getFullYear();
+let tcData = {};        // key: "YYYY-MM" → { thu, chi, note }
+let tcSelKey = null;
+
+// ── LocalStorage helpers ──
+function tcSaveLocal() {
+  try { localStorage.setItem(TC_LS_KEY, JSON.stringify(tcData)); } catch(e) {}
+}
+function tcLoadLocal() {
+  try {
+    const d = localStorage.getItem(TC_LS_KEY);
+    if (d) Object.assign(tcData, JSON.parse(d));
+  } catch(e) {}
+}
+
+// ── Sync dot ──
+function tcSetSync(state) {
+  document.getElementById('tcSyncDot').className = 'dot ' + (state||'');
+}
+
+// ── Supabase load year ──
+async function tcLoadYear() {
+  tcSetSync('spin');
+  const from = `${tcYear}-01`, to = `${tcYear}-12`;
+  try {
+    const { data, error } = await sb
+      .from(TC_TABLE)
+      .select('month,thu,chi,note')
+      .gte('month', from)
+      .lte('month', to);
+    if (error) throw error;
+    if (data) data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
+    tcSaveLocal();
+    tcSetSync('ok');
+  } catch(e) {
+    console.warn('ThuChi load error:', e?.message||e);
+    tcSetSync('err');
+  }
+}
+
+// ── Supabase save ──
+async function tcSaveRecord(key, thu, chi, note) {
+  tcData[key] = { thu, chi, note };
+  tcSaveLocal();
+  try {
+    const { error } = await sb.from(TC_TABLE).upsert(
+      { month: key, thu: thu||0, chi: chi||0, note: note||'' },
+      { onConflict: 'month' }
+    );
+    if (error) throw error;
+    return true;
+  } catch(e) {
+    console.warn('ThuChi save error:', e?.message||e);
+    return false;
+  }
+}
+
+async function tcDelRecord(key) {
+  delete tcData[key];
+  tcSaveLocal();
+  try {
+    const { error } = await sb.from(TC_TABLE).delete().eq('month', key);
+    if (error) throw error;
+    return true;
+  } catch(e) {
+    console.warn('ThuChi delete error:', e?.message||e);
+    return false;
+  }
+}
+
+// ── Formatting — dữ liệu lưu VNĐ triệu, hiển thị theo currency ──
+// Stored unit: triệu VNĐ (e.g. 150 = 150 triệu)
+function tcFmt(valMillion) {
+  if (valMillion == null || valMillion === '' || isNaN(+valMillion)) return '—';
+  const n = parseFloat(valMillion);
+  if (currency === 'USD') {
+    // convert triệu VNĐ → USD
+    const usd = (n * 1_000_000) / usdRate;
+    if (Math.abs(usd) >= 1000) return '$' + (usd/1000).toFixed(1) + 'K';
+    return '$' + usd.toFixed(0);
+  }
+  // VNĐ display
+  if (Math.abs(n) >= 1000) return (n/1000).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
+  if (Math.abs(n) >= 1)    return n % 1 === 0 ? n.toFixed(0) + ' tr' : n.toFixed(1) + ' tr';
+  return (n * 1000).toFixed(0) + ' nghìn';
+}
+function tcFmtNet(valMillion) {
+  if (valMillion == null || isNaN(+valMillion)) return { txt: '—', cls: 'muted' };
+  const n = parseFloat(valMillion);
+  if (n === 0) return { txt: '0', cls: 'muted' };
+  return { txt: (n > 0 ? '+' : '') + tcFmt(n), cls: n > 0 ? 'net-p' : 'net-n' };
+}
+
+// ── Input unit label ──
+function tcUnitLabel() {
+  return currency === 'USD' ? 'USD' : 'VNĐ triệu';
+}
+// ── Convert display input → stored triệu VNĐ ──
+function tcInputToMillion(val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return 0;
+  if (currency === 'USD') return (n * usdRate) / 1_000_000;
+  return n; // already in triệu
+}
+// ── Convert stored triệu VNĐ → display input value ──
+function tcMillionToInput(valMillion) {
+  if (!valMillion) return '';
+  if (currency === 'USD') return +((valMillion * 1_000_000 / usdRate).toFixed(2));
+  return valMillion;
+}
+
+// ── Key helper ──
+const tcKey = (y, m) => `${y}-${String(m+1).padStart(2,'0')}`;
+const TC_QUARTERS = [[0,1,2],[3,4,5],[6,7,8],[9,10,11]];
+const TC_Q_NAMES  = ['Quý 1','Quý 2','Quý 3','Quý 4'];
+const TC_MO_SHORT = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+
+function tcGet(key) { return tcData[key] || null; }  // null = no data (not default 0s)
+function tcIsFuture(y, m) {
+  const now = new Date();
+  return y > now.getFullYear() || (y === now.getFullYear() && m > now.getMonth());
+}
+function tcIsCurrentMonth(y, m) {
+  const now = new Date();
+  return y === now.getFullYear() && m === now.getMonth();
+}
+
+// ── Build month card ──
+function tcBuildMonthCard(y, m) {
+  const key    = tcKey(y, m);
+  const rec    = tcGet(key);           // null if no data
+  const isFut  = tcIsFuture(y, m);
+  const isCur  = tcIsCurrentMonth(y, m);
+  const hasData = rec !== null && (rec.thu !== 0 || rec.chi !== 0 || rec.note);
+  const thu    = rec ? (rec.thu || 0) : 0;
+  const chi    = rec ? (rec.chi || 0) : 0;
+  const net    = thu - chi;
+  const netInf = tcFmtNet(hasData ? net : null);
+
+  let cardCls = 'tc-month-card';
+  if (isFut)    cardCls += ' is-future';
+  if (isCur)    cardCls += ' is-current';
+  if (hasData)  cardCls += net >= 0 ? ' net-pos has-data' : ' net-neg has-data';
+
+  const thuTxt = hasData ? `<span class="tc-amt thu-c">${tcFmt(thu)}</span>` : `<span class="tc-amt muted">—</span>`;
+  const chiTxt = hasData ? `<span class="tc-amt chi-c">${tcFmt(chi)}</span>` : `<span class="tc-amt muted">—</span>`;
+  const netTxt = hasData ? `<span class="tc-amt ${netInf.cls}">${netInf.txt}</span>` : `<span class="tc-amt muted">—</span>`;
+
+  const card = document.createElement('div');
+  card.className = cardCls;
+  card.innerHTML = `
+    <div class="tc-card-month${isCur?' is-current-lbl':''}">${TC_MO_SHORT[m]}</div>
+    <div class="tc-card-row"><span class="tc-lbl tc-lbl-thu">Thu</span>${thuTxt}</div>
+    <div class="tc-divider"></div>
+    <div class="tc-card-row"><span class="tc-lbl tc-lbl-chi">Chi</span>${chiTxt}</div>
+    <div class="tc-divider"></div>
+    <div class="tc-card-row"><span class="tc-lbl tc-lbl-net">Net</span>${netTxt}</div>
+  `;
+  if (!isFut) card.addEventListener('click', () => tcOpenModal(y, m, key));
+  return card;
+}
+
+// ── Build quarter summary card ──
+function tcBuildQCard(y, qIdx) {
+  const months = TC_QUARTERS[qIdx];
+  let qThu = 0, qChi = 0, hasAny = false;
+  months.forEach(m => {
+    const rec = tcGet(tcKey(y, m));
+    if (rec !== null) { hasAny = true; qThu += rec.thu||0; qChi += rec.chi||0; }
+  });
+  const qNet    = qThu - qChi;
+  const netInfo = tcFmtNet(hasAny ? qNet : null);
+
+  const card = document.createElement('div');
+  card.className = 'tc-q-card';
+  card.innerHTML = `
+    <div class="tc-q-title">${TC_Q_NAMES[qIdx]}</div>
+    <div class="tc-q-row">
+      <span class="tc-q-lbl tc-lbl-thu">Thu</span>
+      <span class="tc-q-val thu-c">${hasAny ? tcFmt(qThu) : '—'}</span>
+    </div>
+    <div class="tc-q-row">
+      <span class="tc-q-lbl tc-lbl-chi">Chi</span>
+      <span class="tc-q-val chi-c">${hasAny ? tcFmt(qChi) : '—'}</span>
+    </div>
+    <div class="tc-q-row">
+      <span class="tc-q-lbl tc-lbl-net">Net</span>
+      <span class="tc-q-val ${netInfo.cls}">${netInfo.txt}</span>
+    </div>
+  `;
+  return card;
+}
+
+// ── Render full view ──
+function tcRender() {
+  document.getElementById('tcYearLabel').textContent = tcYear;
+
+  // Year totals
+  let yThu = 0, yChi = 0, hasYear = false;
+  for (let m = 0; m < 12; m++) {
+    const rec = tcGet(tcKey(tcYear, m));
+    if (rec !== null) { hasYear = true; yThu += rec.thu||0; yChi += rec.chi||0; }
+  }
+  const yNet    = yThu - yChi;
+  const yNetInf = tcFmtNet(hasYear ? yNet : null);
+  document.getElementById('tcYearThu').textContent = hasYear ? tcFmt(yThu) : '—';
+  document.getElementById('tcYearChi').textContent = hasYear ? tcFmt(yChi) : '—';
+  const yNetEl = document.getElementById('tcYearNet');
+  yNetEl.textContent = hasYear ? yNetInf.txt : '—';
+  yNetEl.className   = 'cal-pill ' + (!hasYear ? 'zero' : yNet > 0 ? '' : yNet < 0 ? 'neg' : 'zero');
+
+  const body = document.getElementById('tcBody');
+  body.innerHTML = '';
+  TC_QUARTERS.forEach((months, qIdx) => {
+    const block = document.createElement('div');
+    block.className = 'tc-quarter-block';
+    const lbl = document.createElement('div');
+    lbl.className = 'tc-quarter-label';
+    lbl.textContent = TC_Q_NAMES[qIdx];
+    block.appendChild(lbl);
+    const row = document.createElement('div');
+    row.className = 'tc-quarter-row';
+    months.forEach(m => row.appendChild(tcBuildMonthCard(tcYear, m)));
+    row.appendChild(tcBuildQCard(tcYear, qIdx));
+    block.appendChild(row);
+    body.appendChild(block);
+  });
+}
+
+// ── Modal ──
+function tcOpenModal(y, m, key) {
+  tcSelKey = key;
+  const rec = tcGet(key);  // may be null (new) or existing data
+  const unit = tcUnitLabel();
+
+  document.getElementById('tcModalTitle').textContent = TC_MONTHS[m] + ' ' + y;
+  document.getElementById('tcModalSub').textContent   = key + (rec ? ' · Chỉnh sửa' : ' · Nhập mới');
+  document.getElementById('tcLabelThu').textContent   = '💰 THU (' + unit + ')';
+  document.getElementById('tcLabelChi').textContent   = '💸 CHI (' + unit + ')';
+
+  // Pre-fill with existing values converted to current display unit
+  document.getElementById('tcThuInput').value  = rec ? tcMillionToInput(rec.thu) : '';
+  document.getElementById('tcChiInput').value  = rec ? tcMillionToInput(rec.chi) : '';
+  document.getElementById('tcNoteInput').value = rec ? (rec.note || '') : '';
+  document.getElementById('tcSyncMsg').textContent = '';
+  tcUpdNetPreview();
+  document.getElementById('tcModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('tcThuInput').focus(), 50);
+}
+
+function tcCloseModal() {
+  document.getElementById('tcModalBg').classList.remove('open');
+  tcSelKey = null;
+}
+
+function tcUpdNetPreview() {
+  const thu = parseFloat(document.getElementById('tcThuInput').value) || 0;
+  const chi = parseFloat(document.getElementById('tcChiInput').value) || 0;
+  // convert to million VNĐ for net calc
+  const thuM = tcInputToMillion(thu);
+  const chiM = tcInputToMillion(chi);
+  const net  = thuM - chiM;
+  const el   = document.getElementById('tcNetPreview');
+  if (!thu && !chi) { el.textContent = ''; el.style.color = 'var(--text-muted)'; return; }
+  const inf  = tcFmtNet(net);
+  el.textContent = 'Net: ' + inf.txt;
+  el.style.color = net > 0 ? 'var(--green)' : net < 0 ? 'var(--red)' : 'var(--text-muted)';
+}
+
+document.getElementById('tcThuInput').addEventListener('input', tcUpdNetPreview);
+document.getElementById('tcChiInput').addEventListener('input', tcUpdNetPreview);
+
+document.getElementById('tcSaveBtn').addEventListener('click', async () => {
+  if (!tcSelKey) return;
+  const thuInput = parseFloat(document.getElementById('tcThuInput').value) || 0;
+  const chiInput = parseFloat(document.getElementById('tcChiInput').value) || 0;
+  const note     = document.getElementById('tcNoteInput').value.trim();
+  // Always store in triệu VNĐ
+  const thu = tcInputToMillion(thuInput);
+  const chi = tcInputToMillion(chiInput);
+  const msg = document.getElementById('tcSyncMsg');
+  msg.textContent = 'Đang lưu...'; tcSetSync('spin');
+  const ok = await tcSaveRecord(tcSelKey, thu, chi, note);
+  msg.textContent = ok ? '✓ Đã lưu & đồng bộ cloud' : '⚠ Đã lưu local — cloud lỗi';
+  tcSetSync(ok ? 'ok' : 'err');
+  tcRender();
+  setTimeout(tcCloseModal, ok ? 500 : 1500);
+});
+
+document.getElementById('tcClearBtn').addEventListener('click', async () => {
+  if (!tcSelKey) return;
+  const msg = document.getElementById('tcSyncMsg');
+  msg.textContent = 'Đang xóa...'; tcSetSync('spin');
+  const ok = await tcDelRecord(tcSelKey);
+  msg.textContent = ok ? '✓ Đã xóa' : '⚠ Xóa local — cloud lỗi';
+  tcSetSync(ok ? 'ok' : 'err');
+  tcRender();
+  setTimeout(tcCloseModal, ok ? 350 : 1000);
+});
+
+document.getElementById('tcModalBg').addEventListener('click', e => {
+  if (e.target === document.getElementById('tcModalBg')) tcCloseModal();
+});
+
+document.getElementById('tcBtnPrev').addEventListener('click', () => { tcYear--; tcInit(); });
+document.getElementById('tcBtnNext').addEventListener('click', () => { tcYear++; tcInit(); });
+document.getElementById('tcBtnNow').addEventListener('click',  () => { tcYear = new Date().getFullYear(); tcInit(); });
+
+async function tcInit() {
+  tcLoadLocal();
+  tcRender();
+  await tcLoadYear();
+  tcRender();
 }
 
 // ══════════════════════════════════════════════════════════════
