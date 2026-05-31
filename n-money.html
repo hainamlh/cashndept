@@ -526,10 +526,18 @@ body {
 .wc {
   background: var(--cal-week-bg); border: 1px solid var(--cal-week-bd);
   border-radius: 6px; padding: 5px 6px; min-height: 76px;
-  display: flex; flex-direction: column; justify-content: center; overflow: hidden; min-width: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  overflow: hidden; min-width: 0;
 }
 .wc-lbl { font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; }
-.wc-pnl { font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.wc-pnl {
+  font-size: 13px; font-weight: 800;
+  overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; margin-bottom: 2px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  /* scale font down to fit if needed */
+  max-width: 100%;
+}
 .wc-pnl2 { font-size: 9px; font-weight: 600; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
 .wc-days { font-size: 9px; color: var(--text-muted); white-space: nowrap; }
 
@@ -686,6 +694,7 @@ body {
 .tc-card-row {
   display: flex; justify-content: space-between;
   align-items: baseline; margin-bottom: 3px;
+  gap: 4px; min-width: 0;
 }
 .tc-card-row:last-child { margin-bottom: 0; }
 
@@ -693,6 +702,7 @@ body {
   font-size: 10px; font-weight: 700;
   letter-spacing: 0.05em; text-transform: uppercase;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  flex-shrink: 0;
 }
 .tc-lbl-thu { color: var(--green); }
 .tc-lbl-chi { color: var(--red); }
@@ -701,7 +711,9 @@ body {
 .tc-amt {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px; font-weight: 700;
-  white-space: nowrap;
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; text-align: right;
+  min-width: 0; flex: 1;
 }
 .tc-amt.thu-c  { color: var(--green); }
 .tc-amt.chi-c  { color: var(--red); }
@@ -733,14 +745,19 @@ body {
 .tc-q-row {
   display: flex; justify-content: space-between;
   align-items: baseline; margin-bottom: 3px;
+  gap: 3px; min-width: 0;
 }
 .tc-q-lbl {
   font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
   text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif;
+  flex-shrink: 0;
 }
 .tc-q-val {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12px; font-weight: 700; white-space: nowrap;
+  font-size: 12px; font-weight: 700;
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; text-align: right;
+  min-width: 0; flex: 1;
 }
 .tc-q-val.thu-c { color: var(--green); }
 .tc-q-val.chi-c { color: var(--red); }
@@ -801,15 +818,17 @@ body {
   .adjust-row1 .adj-date-btn { display: flex; }
 
   /* ── Thu Chi mobile ── */
-  .tc-wrap { padding: 10px 10px 20px; }
-  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 76px; gap: 5px; }
-  .tc-month-card { padding: 8px 9px; border-radius: 8px; }
-  .tc-card-month { font-size: 10px; margin-bottom: 6px; }
-  .tc-amt { font-size: 11px; }
-  .tc-lbl { font-size: 9px; }
-  .tc-q-card { padding: 8px 8px; border-radius: 8px; }
-  .tc-q-val { font-size: 11px; }
-  .tc-q-lbl { font-size: 8px; }
+  .tc-wrap { padding: 8px 8px 20px; }
+  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 68px; gap: 4px; }
+  .tc-month-card { padding: 7px 8px; border-radius: 8px; }
+  .tc-card-month { font-size: 9px; margin-bottom: 5px; letter-spacing: 0; }
+  .tc-amt { font-size: 10px; }
+  .tc-lbl { font-size: 8px; letter-spacing: 0; }
+  .tc-divider { margin: 3px 0; }
+  .tc-q-card { padding: 7px 7px; border-radius: 8px; }
+  .tc-q-val { font-size: 10px; }
+  .tc-q-lbl { font-size: 7px; letter-spacing: 0; }
+  .tc-q-title { font-size: 8px; margin-bottom: 6px; }
   #view-calendar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cal-statsbar { padding: 7px 10px; gap: 7px; flex-wrap: nowrap; }
   .cal-nav-group { gap: 4px; }
@@ -830,7 +849,7 @@ body {
   .dc-note { display: none; }
   .wc { min-height: 58px; padding: 3px 4px; }
   .wc-lbl { font-size: 7px; letter-spacing: 0.5px; margin-bottom: 2px; }
-  .wc-pnl { font-size: 10px; }
+  .wc-pnl { font-size: 11px; }
   .wc-pnl2 { display: none; }
   .wc-days { font-size: 7px; }
 }
@@ -839,6 +858,12 @@ body {
   .topbar { padding: 5px 8px; }
   .page-tab { padding: 4px 7px; font-size: 10px; }
   .cal-wrap { min-width: 340px; }
+  /* Thu Chi extra narrow */
+  .tc-quarter-row { grid-template-columns: 1fr 1fr 1fr 60px; gap: 3px; }
+  .tc-amt { font-size: 9px; }
+  .tc-q-val { font-size: 9px; }
+  .tc-month-card { padding: 6px 6px; }
+  .tc-q-card { padding: 6px 5px; }
 }
 
 @media (max-width: 360px) {
@@ -1779,9 +1804,27 @@ function calFmtVND_r(usd, full=false) {
   const sign=n>0?'+':'-',a=Math.abs(n);
   if(full)return sign+a.toLocaleString('vi-VN')+' ₫';
   if(a>=1e9){const v=a/1e9;return sign+(v%1===0?v.toFixed(0):v.toFixed(2))+' tỷ';}
-  if(a>=1e6){const v=a/1e6;return sign+(v%1===0?v.toFixed(0):v.toFixed(1))+' triệu';}
-  if(a>=1e3){const v=a/1e3;return sign+v.toFixed(0)+' nghìn';}
+  if(a>=1e6){const v=a/1e6;return sign+(v%1===0?v.toFixed(0):v.toFixed(1))+' tr';}
+  if(a>=1e3){const v=a/1e3;return sign+v.toFixed(0)+'K';}
   return sign+a.toFixed(0)+' ₫';
+}
+// Compact format specifically for narrow week cell (no spaces, very short)
+function calFmtCompact(usd) {
+  if(usd==null||usd==='')return'—';
+  if(calCurMode==='USD') {
+    const n=parseFloat(usd); if(isNaN(n))return''; if(n===0)return'$0';
+    const s=n>0?'+$':'-$',a=Math.abs(n);
+    if(a>=1e6)return s+(a/1e6).toFixed(1)+'M';
+    if(a>=1000)return s+(a/1000).toFixed(1)+'K';
+    return s+a.toFixed(0);
+  } else {
+    const n=parseFloat(usd)*calGetFx(); if(isNaN(n))return''; if(n===0)return'0';
+    const sign=n>0?'+':'-',a=Math.abs(n);
+    if(a>=1e9)return sign+(a/1e9).toFixed(1)+'tỷ';
+    if(a>=1e6)return sign+(a/1e6).toFixed(1)+'tr';
+    if(a>=1e3)return sign+(a/1e3).toFixed(0)+'K';
+    return sign+a.toFixed(0);
+  }
 }
 const calFmtP = (usd, full=false) => calCurMode==='VND' ? calFmtVND_r(usd,full) : calFmtUSD(usd,full);
 
@@ -1839,7 +1882,7 @@ function calRender() {
     wc.className='wc';
     if(wDays>0){
       const c=wPnl>0?'cal-pos':wPnl<0?'cal-neg':'cal-zer';
-      wc.innerHTML=`<div class="wc-lbl">T${w+1}</div><div class="wc-pnl ${c}">${calFmtP(wPnl)}</div><div class="wc-days">${wDays}d</div>`;
+      wc.innerHTML=`<div class="wc-lbl">T${w+1}</div><div class="wc-pnl ${c}">${calFmtCompact(wPnl)}</div><div class="wc-days">${wDays}d</div>`;
     } else {
       wc.innerHTML=`<div class="wc-lbl">T${w+1}</div><div class="wc-pnl cal-zer" style="font-size:10px">—</div>`;
     }
@@ -2255,6 +2298,25 @@ document.getElementById('tcBtnNow').addEventListener('click',  () => { tcYear = 
 async function tcInit() {
   tcLoadLocal();
   tcRender();
+  // Test connection first — surface exact error to user
+  try {
+    const { error } = await sb.from(TC_TABLE).select('month').limit(1);
+    if (error) {
+      const msg = error.message || String(error);
+      const friendly = msg.includes('relation') || msg.includes('does not exist')
+        ? 'Table "thu_chi" chưa tồn tại trong Supabase. Cần chạy SQL tạo table.'
+        : msg.includes('permission') || msg.includes('policy') || msg.includes('RLS')
+        ? 'Supabase RLS đang chặn — cần DISABLE ROW LEVEL SECURITY cho table thu_chi.'
+        : msg;
+      showToast('☁ Thu Chi: ' + friendly, 'error');
+      tcSetSync('err', friendly);
+      return;
+    }
+  } catch(e) {
+    showToast('☁ Thu Chi: Không kết nối được Supabase', 'error');
+    tcSetSync('err', String(e));
+    return;
+  }
   await tcLoadYear();
   tcRender();
 }
