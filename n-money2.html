@@ -1675,8 +1675,9 @@ function addManual() {
 
 function fmtInputComma(el) {
   let raw = el.value;
-  // Preserve leading minus
+  // Preserve leading sign (+ or -)
   const neg = raw.startsWith('-');
+  const pos = raw.startsWith('+');
   // Strip everything except digits and dot
   let stripped = raw.replace(/[^\d.]/g, '');
   // Allow only one dot
@@ -1690,9 +1691,11 @@ function fmtInputComma(el) {
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   // Reassemble
   let result = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+  // Re-attach sign
   if (neg && result !== '') result = '-' + result;
-  // Preserve cursor: if user typed minus only or dot only, don't wipe
-  if (raw === '-' || raw === '-.' || raw === '.') { el.value = raw; return; }
+  else if (pos && result !== '') result = '+' + result;
+  // Preserve cursor: if user typed sign only or dot only, don't wipe
+  if (raw === '-' || raw === '+' || raw === '-.' || raw === '+.' || raw === '.') { el.value = raw; return; }
   el.value = result;
 }
 function attachCommaInputs() {
@@ -1842,7 +1845,7 @@ function renderDashboard() {
         <div class="adjust-title">± Điều chỉnh dư nợ</div>
         <div class="adjust-row1">
           <button class="adj-date-btn" id="adj-date-btn-${i}" title="Chọn ngày" onclick="cdpOpen(${i})">📅</button>
-          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="decimal" placeholder="${currency==='USD'?'+/- Số tiền (USD)':'+/- Số tiền (VNĐ)'}" oninput="fmtInputComma(this)">
+          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="text" placeholder="${currency==='USD'?'+/- Số tiền (USD)':'+/- Số tiền (VNĐ)'}" oninput="fmtInputComma(this)">
           <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
           <button class="btn-adjust adj-btn" onclick="applyAdjust(${i})">Lưu</button>
         </div>
