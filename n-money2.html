@@ -1529,11 +1529,17 @@ function saveState() {
 async function saveToSupabase() {
   if (!syncCode) return;
   try {
+    // Delete all rows for this sync_code first, then re-insert
+    // Avoids supabase-js v2 onConflict multi-column quoting bug (400 Bad Request)
+    const { error: delErr } = await sb.from('debt_cards').delete().eq('sync_code', syncCode);
+    if (delErr) throw delErr;
+    if (state.cards.length === 0) { updateSyncStatus(); return; }
     const rows = state.cards.map(c => {
-      if (!c._key) c._key = c.bank+'_'+(c._createdAt||(c._createdAt=Date.now()));
-      return { sync_code:syncCode, card_key:c._key, bank:c.bank||'', amount:c.amount||0, due_date:c.dueDate||null, card_type:c.cardType||null, min_payment:c.minPayment||null, note:c.note||null, transactions:c.transactions||[] };
+      if (!c._key) c._key = c.bank + '_' + (c._createdAt || (c._createdAt = Date.now()));
+      return { sync_code: syncCode, card_key: c._key, bank: c.bank||'', amount: c.amount||0, due_date: c.dueDate||null, card_type: c.cardType||null, min_payment: c.minPayment||null, note: c.note||null, transactions: c.transactions||[] };
     });
-    await sb.from('debt_cards').upsert(rows, {onConflict:'sync_code,card_key'});
+    const { error: insErr } = await sb.from('debt_cards').insert(rows);
+    if (insErr) throw insErr;
     updateSyncStatus();
   } catch(e) { console.warn('Supabase save error:', e); }
 }
