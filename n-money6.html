@@ -2725,27 +2725,13 @@ async function calLoadMonth() {
   calSetSync('spin');
   const from=calDk(calY,calM,1), to=calDk(calY,calM,new Date(calY,calM+1,0).getDate());
   try {
-    // 1. Load rows thuộc user này
-    const { data, error } = await sb
-      .from(CAL_TABLE).select('date,pnl,note')
-      .eq('sync_code', syncCode)
-      .gte('date', from).lte('date', to);
-    if (error) throw error;
-
-    // 2. Nếu chưa có data, thử migrate rows cũ (sync_code IS NULL) → gán user
-    if (!data || data.length === 0) {
-      const { data: old } = await sb.from(CAL_TABLE).select('date,pnl,note')
-        .is('sync_code', null).gte('date', from).lte('date', to);
-      if (old && old.length > 0) {
-        await sb.from(CAL_TABLE).update({ sync_code: syncCode })
-          .is('sync_code', null).gte('date', from).lte('date', to);
-        old.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
-        calSaveLocal();
-      }
-    } else {
-      data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
-      calSaveLocal();
-    }
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const url = `${SB_URL}/rest/v1/trading_calendar?sync_code=eq.${encodeURIComponent(syncCode)}&date=gte.${from}&date=lte.${to}&select=date,pnl,note`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
+    data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
+    calSaveLocal();
     calSetSync('ok');
   } catch(e) {
     console.warn('Calendar load error:', e?.message || e);
@@ -3143,29 +3129,13 @@ async function tcLoadYear() {
   if (!syncCode) return;
   tcSetSync('spin');
   try {
-    // 1. Load rows thuộc user này
-    const { data, error } = await sb.from(TC_TABLE)
-      .select('month,thu,chi,note').eq('sync_code', syncCode)
-      .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`)
-      .order('month', { ascending: true });
-    if (error) throw error;
-
-    // 2. Nếu chưa có data, thử migrate rows cũ (sync_code IS NULL)
-    if (!data || data.length === 0) {
-      const { data: old } = await sb.from(TC_TABLE).select('month,thu,chi,note')
-        .is('sync_code', null)
-        .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`);
-      if (old && old.length > 0) {
-        await sb.from(TC_TABLE).update({ sync_code: syncCode })
-          .is('sync_code', null)
-          .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`);
-        old.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
-        tcSaveLocal();
-      }
-    } else {
-      data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
-      tcSaveLocal();
-    }
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const url = `${SB_URL}/rest/v1/thu_chi?sync_code=eq.${encodeURIComponent(syncCode)}&month=gte.${tcYear}-01&month=lte.${tcYear}-12&select=month,thu,chi,note&order=month.asc`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
+    data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
+    tcSaveLocal();
     tcSetSync('ok');
   } catch(e) {
     const msg = e?.message || String(e);
