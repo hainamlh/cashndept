@@ -2737,7 +2737,9 @@ async function calLoadMonth() {
     const res = await fetch(url, { headers });
     if (!res.ok) throw new Error('Load failed: ' + res.status);
     const data = await res.json();
+    console.log('calLoadMonth rows:', data.length, JSON.stringify(data));
     data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
+    console.log('calData after load:', JSON.stringify(calData));
     calSaveLocal();
     calSetSync('ok');
   } catch(e) {
