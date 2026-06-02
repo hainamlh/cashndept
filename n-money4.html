@@ -1140,8 +1140,200 @@ body {
   .aa-grid { grid-template-columns: 1fr; }
 }
 
+/* ══ MOBILE NAV HAMBURGER ════════════════════════════════════ */
+.ham-btn {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  cursor: pointer; font-size: 18px; color: var(--text-primary);
+  flex-shrink: 0; transition: border-color 0.2s;
+}
+.ham-btn:hover { border-color: var(--gold); }
+.ham-dropdown {
+  display: none;
+  position: fixed; top: 52px; left: 0; right: 0; z-index: 3000;
+  background: var(--bg-1); border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  flex-direction: column; gap: 2px; padding: 8px 10px 12px;
+}
+.ham-dropdown.open { display: flex; }
+.ham-tab-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700;
+  color: var(--text-secondary); cursor: pointer;
+  border: none; background: transparent; text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.ham-tab-item:hover { background: var(--bg-2); color: var(--text-primary); }
+.ham-tab-item.active {
+  background: var(--gold-dim);
+  color: var(--gold);
+  border: 1px solid rgba(201,168,76,0.25);
+}
+.ham-overlay { display: none; position: fixed; inset: 0; z-index: 2999; }
+.ham-overlay.open { display: block; }
+
+@media (max-width: 768px) {
+  .page-tabs { display: none; }
+  .ham-btn { display: flex; }
+}
+
+/* ══ ASSET ALLOCATION — THU CHI STYLE ═══════════════════════ */
+.aa-asset-section { margin-bottom: 16px; }
+
+.aa-asset-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.aa-asset-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+
+/* 3+3 grid matching tc-quarter-row */
+.aa-asset-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  justify-content: stretch;
+  max-width: 83%;
+  margin: 0 auto;
+}
+
+/* Individual asset card */
+.aa-asset-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.2s;
+  box-shadow: var(--shadow-card);
+  position: relative; overflow: hidden;
+}
+.aa-asset-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--green), transparent);
+}
+.aa-asset-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+.aa-asset-card.selected { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+.aa-asset-card.selected::before { background: var(--green); }
+
+/* Card header row: icon + name */
+.aa-card-header {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.03em;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 5px;
+}
+.aa-card-icon { font-size: 14px; line-height: 1; }
+
+/* Value + % rows — same as tc-card-row */
+.aa-card-row {
+  display: flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 7px;
+  gap: 4px; min-width: 0;
+}
+.aa-card-row:last-child { margin-bottom: 0; }
+.aa-card-lbl {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text-muted); flex-shrink: 0;
+}
+.aa-card-val {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 700;
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; text-align: right;
+  min-width: 0; flex: 1; color: var(--green);
+}
+.aa-card-val.muted { color: var(--text-muted); }
+.aa-card-pct {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 800;
+  color: var(--text-secondary); text-align: right;
+}
+
+/* Compact accordion panel */
+.aa-accordion {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  margin-bottom: 10px;
+}
+.aa-accordion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--border);
+}
+.aa-accordion-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 700; color: var(--text-primary);
+  display: flex; align-items: center; gap: 7px;
+}
+.aa-accordion-arrow { font-size: 11px; color: var(--text-muted); transition: transform 0.2s; }
+.aa-accordion.open .aa-accordion-arrow { transform: rotate(180deg); }
+.aa-accordion-body { padding: 10px 12px 12px; }
+
+/* Compact adj-row inside accordion */
+.aa-adj-row-compact {
+  display: grid; grid-template-columns: 32px 1fr 1fr 52px;
+  gap: 5px; align-items: center; margin-bottom: 8px;
+}
+.aa-adj-input-sm {
+  padding: 6px 8px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: 7px;
+  color: var(--text-primary); font-family: 'Nunito Sans', sans-serif;
+  font-size: 13px; outline: none; width: 100%; transition: border-color 0.2s;
+}
+.aa-adj-input-sm:focus { border-color: var(--gold); }
+.aa-adj-input-sm::placeholder { color: var(--text-muted); font-size: 11px; }
+.aa-adj-btn-sm {
+  padding: 6px 0; background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none; border-radius: 7px; color: #0c0e14;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; width: 100%; transition: filter 0.15s;
+}
+.aa-adj-btn-sm:hover { filter: brightness(1.08); }
+.aa-date-btn-sm {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px;
+  cursor: pointer; font-size: 14px; transition: border-color 0.2s; flex-shrink: 0;
+}
+.aa-date-btn-sm:hover { border-color: var(--gold); }
+.aa-date-btn-sm.has-date { border-color: var(--gold); background: var(--gold-dim); }
+
+/* Compact tx list */
+.aa-tx-list-sm {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 160px; overflow-y: auto;
+}
+.aa-tx-item-sm {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; padding: 3px 0; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.aa-tx-item-sm:last-child { border-bottom: none; }
+.aa-tx-pg-row { display: flex; align-items: center; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .aa-asset-row { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+  .aa-asset-card { padding: 11px 8px 13px; border-radius: 9px; }
+  .aa-card-val { font-size: 12px; }
+  .aa-adj-row-compact { grid-template-columns: 30px 1fr 1fr 46px; gap: 4px; }
+}
+@media (max-width: 480px) {
+  .aa-asset-row { grid-template-columns: 1fr 1fr; }
+}
+
 </style>
-</head>
 <body>
 
 <!-- ═══ MODALS (Debt Tracker) ═══════════════════════════════════════ -->
@@ -1221,7 +1413,7 @@ body {
       <button onclick="calCloseModal()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0 3px;line-height:1">&#x2715;</button>
     </div>
     <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">P&L (<span id="calModeLabel">USD</span>) <span class="expr-hint">hỗ trợ + − × ÷</span></label>
-    <input id="calPnlInput" type="text" inputmode="decimal" autocomplete="off" placeholder="vd: 150+80-30" class="cal-modal-field expr-input">
+    <input id="calPnlInput" type="text" inputmode="decimal" autocomplete="off" placeholder="vd: 150+80-30" class="cal-modal-field expr-input" oninput="fmtInputCommaExpr(this)">
     <div class="expr-result" id="calExprResult"></div>
     <div class="cal-modal-preview cal-zer" id="calPnlPreview"></div>
     <label style="display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:6px">Ghi chú</label>
@@ -1260,6 +1452,15 @@ body {
   </div>
 </div>
 
+<!-- Mobile Nav Dropdown -->
+<div class="ham-overlay" id="hamOverlay" onclick="hamClose()"></div>
+<div class="ham-dropdown" id="hamDropdown">
+  <button class="ham-tab-item active" id="hamTabDebt"     onclick="hamNav('debt')">💳 Debt Tracker</button>
+  <button class="ham-tab-item"        id="hamTabCalendar" onclick="hamNav('calendar')">📅 Trading Calendar</button>
+  <button class="ham-tab-item"        id="hamTabThuChi"   onclick="hamNav('thuchi')">📊 Thu Chi</button>
+  <button class="ham-tab-item"        id="hamTabAsset"    onclick="hamNav('asset')">🏦 Phân bổ tài sản</button>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1273,7 +1474,9 @@ body {
         <div class="brand-logo">💰</div>
         <span class="brand-name">N-Money</span>
       </a>
-      <!-- Page Tabs -->
+      <!-- Hamburger (mobile only) -->
+      <button class="ham-btn" id="hamBtn" onclick="hamToggle()" title="Menu">☰</button>
+      <!-- Page Tabs (desktop) -->
       <div class="page-tabs">
         <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt Tracker</button>
         <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading Calendar</button>
@@ -1454,11 +1657,11 @@ body {
       </div>
       <!-- Thu -->
       <label style="display:block;font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelThu">💰 THU <span class="expr-hint">hỗ trợ + − × ÷</span></label>
-      <input id="tcThuInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" class="cal-modal-field expr-input" style="border-color:rgba(76,175,130,0.3)">
+      <input id="tcThuInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" class="cal-modal-field expr-input" style="border-color:rgba(76,175,130,0.3)" oninput="fmtInputCommaExpr(this)">
       <div class="expr-result" id="tcThuExprResult"></div>
       <!-- Chi -->
       <label style="display:block;font-size:9px;font-weight:700;color:var(--red);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:5px" id="tcLabelChi">💸 CHI <span class="expr-hint">hỗ trợ + − × ÷</span></label>
-      <input id="tcChiInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" class="cal-modal-field expr-input" style="border-color:rgba(224,85,85,0.3)">
+      <input id="tcChiInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0" class="cal-modal-field expr-input" style="border-color:rgba(224,85,85,0.3)" oninput="fmtInputCommaExpr(this)">
       <div class="expr-result" id="tcChiExprResult"></div>
       <!-- Net preview -->
       <div id="tcNetPreview" style="text-align:center;font-size:18px;font-weight:800;min-height:30px;margin-bottom:16px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-muted)"></div>
@@ -1473,31 +1676,28 @@ body {
 
   <!-- ═══ ASSET ALLOCATION VIEW ══════════════════════════════ -->
   <div class="page-view" id="view-asset">
-    <!-- Stats bar -->
+    <!-- Stats bar — same pattern as Thu Chi / Calendar -->
     <div class="cal-statsbar" style="justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="dot" id="aaSyncDot"></div>
-        <span style="font-size:12px;color:var(--text-muted)" id="aaSyncLabel">Đang tải...</span>
+      <div class="cal-nav-group" style="flex:none">
+        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;color:var(--text-primary)">Phân bổ tài sản</span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
         <div style="text-align:right">
-          <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif">Tổng tài sản</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif">Tổng tài sản</div>
           <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--gold);letter-spacing:-0.02em;line-height:1.1" id="aaTotalVal">—</div>
-          <div style="font-size:11px;color:var(--text-muted)" id="aaTotalSub"></div>
+          <div style="font-size:10px;color:var(--text-muted)" id="aaTotalSub"></div>
         </div>
+        <div class="dot" id="aaSyncDot"></div>
       </div>
     </div>
 
     <div class="aa-wrap">
-      <!-- Section: Phân bổ tài sản -->
       <div class="aa-section-label">Danh mục tài sản</div>
-
-      <!-- 4 Asset blocks -->
-      <div class="aa-grid" id="aaGrid">
-        <!-- rendered by JS -->
-      </div>
-
-      <!-- Legend row -->
+      <!-- 6 cards: hàng 1 (3 cards) + hàng 2 (3 cards) -->
+      <div id="aaGrid"></div>
+      <!-- Accordion -->
+      <div id="aaAccordion"></div>
+      <!-- Legend -->
       <div class="aa-legend-row" id="aaLegend"></div>
     </div>
   </div><!-- /view-asset -->
@@ -1543,6 +1743,11 @@ function switchPage(page) {
   document.getElementById('tabCalendar').classList.toggle('active', page === 'calendar');
   document.getElementById('tabThuChi').classList.toggle('active', page === 'thuchi');
   document.getElementById('tabAsset').classList.toggle('active', page === 'asset');
+  // Sync hamburger dropdown
+  document.getElementById('hamTabDebt')    ?.classList.toggle('active', page==='debt');
+  document.getElementById('hamTabCalendar')?.classList.toggle('active', page==='calendar');
+  document.getElementById('hamTabThuChi')  ?.classList.toggle('active', page==='thuchi');
+  document.getElementById('hamTabAsset')   ?.classList.toggle('active', page==='asset');
   if (page === 'calendar') calInit();
   if (page === 'thuchi') tcInit();
   if (page === 'asset') aaInit();
@@ -1642,9 +1847,66 @@ async function loginForgot() {
 function loginShowLogout() {
   if (!currentUser) return;
   if (confirm(`Đăng xuất khỏi ${currentUser.email}?`)) {
-    sb.auth.signOut();
+    sb.auth.signOut().catch(() => {}).finally(() => {
+      // Force clear local state even if signOut fails
+      currentUser = null;
+      syncCode = '';
+      localStorage.removeItem('sb-' + SB_URL.split('//')[1].split('.')[0] + '-auth-token');
+      updateUserChip(null);
+      document.getElementById('loginOverlay').classList.remove('hidden');
+    });
   }
 }
+
+// Legacy stubs
+function updateSyncStatus() { updateUserChip(currentUser); }
+let _authHandling = false;
+
+// Supabase auth state listener — single source of truth
+sb.auth.onAuthStateChange(async (event, session) => {
+  // Ignore TOKEN_REFRESHED to prevent sync loop on refresh
+  if (event === 'TOKEN_REFRESHED') { return; }
+  if (_authHandling) return;
+  _authHandling = true;
+  try {
+    if (session?.user) {
+      currentUser = session.user;
+      const userId = currentUser.id;
+
+      // ── Migration: nếu có sync_code cũ → UPDATE toàn bộ sang user.id ──
+      const oldCode = localStorage.getItem(SYNC_CODE_KEY);
+      if (oldCode && oldCode !== userId) {
+        try {
+          const tables = ['debt_cards', 'trading_calendar', 'asset_allocation', 'thu_chi'];
+          await Promise.all(tables.map(t =>
+            sb.from(t).update({ sync_code: userId }).eq('sync_code', oldCode).then(r => {
+              if (r.error) console.warn(`Migration ${t}:`, r.error.message);
+            })
+          ));
+          localStorage.removeItem(SYNC_CODE_KEY);
+          showToast('✓ Đã chuyển dữ liệu sang tài khoản mới', 'success');
+        } catch(e) { console.warn('Migration error:', e); }
+      }
+
+      syncCode = userId;
+      document.getElementById('loginOverlay').classList.add('hidden');
+      updateUserChip(currentUser);
+      // Load all data with new user id
+      await loadState();
+      if (activePage === 'thuchi')   await tcInit();
+      if (activePage === 'calendar') await calInit();
+      if (activePage === 'asset')    await aaInit();
+      else aaLoadLocal();  // preload AA local even if not on tab
+    } else {
+      currentUser = null;
+      syncCode    = '';
+      document.getElementById('loginOverlay').classList.remove('hidden');
+      updateUserChip(null);
+    }
+  } finally {
+    _authHandling = false;
+  }
+});
 
 function updateUserChip(user) {
   const avatar  = document.getElementById('userAvatar');
@@ -1661,46 +1923,6 @@ function updateUserChip(user) {
     dot.className       = 'dot';
   }
 }
-
-// Supabase auth state listener — single source of truth
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    currentUser = session.user;
-    const userId = currentUser.id;
-
-    // ── Migration: nếu có sync_code cũ → UPDATE toàn bộ sang user.id ──
-    const oldCode = localStorage.getItem(SYNC_CODE_KEY);
-    if (oldCode && oldCode !== userId) {
-      try {
-        const tables = ['debt_cards', 'trading_calendar', 'asset_allocation', 'thu_chi'];
-        await Promise.all(tables.map(t =>
-          sb.from(t).update({ sync_code: userId }).eq('sync_code', oldCode).then(r => {
-            if (r.error) console.warn(`Migration ${t}:`, r.error.message);
-          })
-        ));
-        localStorage.removeItem(SYNC_CODE_KEY);
-        showToast('✓ Đã chuyển dữ liệu sang tài khoản mới', 'success');
-      } catch(e) { console.warn('Migration error:', e); }
-    }
-
-    syncCode = userId;
-    document.getElementById('loginOverlay').classList.add('hidden');
-    updateUserChip(currentUser);
-    // Load all data with new user id
-    await loadState();
-    if (activePage === 'thuchi')   tcInit();
-    if (activePage === 'calendar') calInit();
-    if (activePage === 'asset')    aaInit();
-  } else {
-    currentUser = null;
-    syncCode    = '';
-    document.getElementById('loginOverlay').classList.remove('hidden');
-    updateUserChip(null);
-  }
-});
-
-// Legacy stubs (kept so no other code breaks)
-function updateSyncStatus() { updateUserChip(currentUser); }
 function openSyncModal()  {}
 function closeSyncModal() {}
 async function saveSyncCode() {}
@@ -2420,9 +2642,37 @@ function evalExpr(raw) {
   try { result = Function('"use strict";return(' + s + ')')(); } catch(e) { return { val: null, display: '', err: false }; }
   if (typeof result !== 'number' || !isFinite(result)) return { val: null, display: '⚠ Lỗi tính toán', err: true };
   var rounded = Math.round(result * 1e6) / 1e6;
-  // Show "= result" only when input has an operator (i.e. is an expression)
+  // Show "= result" with comma formatting only when input has an operator
   var hasOp = /[+\-*/]/.test(s.replace(/^-/,''));
-  return { val: rounded, display: hasOp ? ('= ' + rounded.toLocaleString('vi-VN', {maximumFractionDigits:4})) : '', err: false };
+  var formatted = rounded.toLocaleString('vi-VN', {maximumFractionDigits:4});
+  return { val: rounded, display: hasOp ? ('= ' + formatted) : '', err: false };
+}
+
+// Format number with thousand commas for plain number inputs (not expr)
+function fmtInputCommaExpr(el) {
+  // For expr inputs: only format when value is a plain number (no operators)
+  var raw = el.value;
+  if (!raw) return;
+  var s = raw.replace(/\s/g,'');
+  // If it contains operators (expression), don't reformat — let evalExpr handle preview
+  if (/[+\-*/×÷()]/.test(s.replace(/^[+\-]/,''))) return;
+  // Plain number — apply comma formatting
+  var neg = raw.startsWith('-'), pos = raw.startsWith('+');
+  var stripped = raw.replace(/[^\d.]/g,'');
+  var dotIdx = stripped.indexOf('.');
+  if (dotIdx !== -1) stripped = stripped.slice(0,dotIdx+1)+stripped.slice(dotIdx+1).replace(/\./g,'');
+  var parts = stripped.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  var result = parts.length > 1 ? parts[0]+'.'+parts[1] : parts[0];
+  if (neg && result) result = '-'+result;
+  else if (pos && result) result = '+'+result;
+  if (raw==='-'||raw==='+'||raw==='-.'||raw==='+.'||raw==='.') return;
+  // Preserve cursor position
+  var caret = el.selectionStart;
+  var oldLen = el.value.length;
+  el.value = result;
+  var newLen = el.value.length;
+  try { el.setSelectionRange(caret+(newLen-oldLen), caret+(newLen-oldLen)); } catch(e){}
 }
 
 function bindExprInput(inputId, resultId, onValue) {
@@ -3016,14 +3266,23 @@ const AA_LS_KEY   = 'nmoney_aa_state';
 
 // 4 asset definitions
 const AA_ASSETS = [
-  { key: 'stock',       icon: '📈', name: 'Cổ phiếu cổ tức dài hạn', shortName: 'Cổ phiếu', cls: 'stock',       color: 'var(--green)', targetMin: 55, targetMax: 60 },
-  { key: 'gold',        icon: '🥇', name: 'Vàng miếng',               shortName: 'Vàng',     cls: 'gold',        color: 'var(--green)', targetMin: 20, targetMax: 20 },
-  { key: 'realestate',  icon: '🏠', name: 'Bất động sản',             shortName: 'BĐS',      cls: 'realestate',  color: 'var(--green)', targetMin: 20, targetMax: 25 },
-  { key: 'emergency',   icon: '🛡️', name: 'Quỹ khẩn cấp (tiết kiệm)', shortName: 'Quỹ KCB', cls: 'emergency',   color: 'var(--green)', targetMin: null, targetMax: null },
+  { key: 'stock',      icon: '📈', name: 'Cổ phiếu cổ tức',  shortName: 'Cổ phiếu',    cls: 'stock',      color: 'var(--green)', targetMin: 55, targetMax: 60 },
+  { key: 'gold',       icon: '🥇', name: 'Vàng',              shortName: 'Vàng',         cls: 'gold',       color: 'var(--green)', targetMin: 20, targetMax: 20 },
+  { key: 'realestate', icon: '🏠', name: 'Bất động sản',      shortName: 'Bất động sản', cls: 'realestate', color: 'var(--green)', targetMin: 20, targetMax: 25 },
+  { key: 'crypto',     icon: '₿',  name: 'Crypto',            shortName: 'Crypto',       cls: 'crypto',     color: 'var(--green)', targetMin: null, targetMax: null },
+  { key: 'fx',         icon: '💱', name: 'FX',                shortName: 'FX',           cls: 'fx',         color: 'var(--green)', targetMin: null, targetMax: null },
+  { key: 'emergency',  icon: '🛡️', name: 'Quỹ dự phòng',     shortName: 'Quỹ dự phòng', cls: 'emergency',  color: 'var(--green)', targetMin: null, targetMax: null },
 ];
 
 // State: { stock: { value, transactions: [{date,amount,note}] }, ... }
-let aaState = { stock: {value:0,transactions:[]}, gold: {value:0,transactions:[]}, realestate: {value:0,transactions:[]}, emergency: {value:0,transactions:[]} };
+let aaState = {
+  stock:      { value: 0, transactions: [] },
+  gold:       { value: 0, transactions: [] },
+  realestate: { value: 0, transactions: [] },
+  crypto:     { value: 0, transactions: [] },
+  fx:         { value: 0, transactions: [] },
+  emergency:  { value: 0, transactions: [] },
+};
 // CDP integration: track which asset is being date-picked
 let _aaCdpAsset = null;
 
@@ -3129,87 +3388,52 @@ function aaTxPageSet(key, pg) {
 }
 
 // ── Render ──
+// Per-asset selected state for accordion
+let _aaSelKey = null;
+
 function aaRender() {
   const total = aaGetTotal();
-
-  // Header totals — right side of statsbar
   const totalEl = document.getElementById('aaTotalVal');
   const subEl   = document.getElementById('aaTotalSub');
-  const syncLbl = document.getElementById('aaSyncLabel');
   if (totalEl) totalEl.textContent = total ? aaFmtVal(total) : '—';
   if (subEl)   subEl.textContent   = total ? aaFmtSub(total) : '';
-  if (syncLbl) syncLbl.textContent = currentUser ? currentUser.email : 'Chưa đăng nhập';
 
   const grid = document.getElementById('aaGrid');
   if (!grid) return;
 
-  grid.innerHTML = AA_ASSETS.map(a => {
-    const st      = aaState[a.key];
-    const val     = st.value || 0;
-    const pct     = aaGetPct(a.key);
-    const fillPct = Math.min(pct, 100);
-    const txs     = st.transactions || [];
-    const pg      = _aaTxPage[a.key] || 0;
-    const totalPages = Math.ceil(txs.length / AA_TX_PER_PAGE) || 1;
-    const pageTxs = txs.slice(pg * AA_TX_PER_PAGE, (pg+1) * AA_TX_PER_PAGE);
-    const globalOffset = pg * AA_TX_PER_PAGE;
-
-    const txHtml = txs.length ? `
-      <div class="aa-tx-list">
-        ${pageTxs.map((tx, ti) => `
-          <div class="aa-tx-item">
-            <span class="aa-tx-date">${tx.date}</span>
-            <span class="aa-tx-amt ${tx.amount>=0?'pos':'neg'}">${tx.amount>=0?'+':''}${aaFmtVal(tx.amount)}</span>
-            <span class="aa-tx-note">${tx.note||'—'}</span>
-            <button class="aa-tx-del" onclick="aaDelTx('${a.key}',${globalOffset+ti})" title="Xóa">✕</button>
-          </div>`).join('')}
-      </div>
-      ${totalPages > 1 ? `
-      <div class="aa-tx-pagination">
-        <button class="aa-tx-pg-btn" onclick="aaTxPageSet('${a.key}',${pg-1})" ${pg===0?'disabled':''}>‹</button>
-        ${Array.from({length:totalPages},(_,i)=>`<button class="aa-tx-pg-btn${i===pg?' aa-tx-pg-active':''}" onclick="aaTxPageSet('${a.key}',${i})">${i+1}</button>`).join('')}
-        <button class="aa-tx-pg-btn" onclick="aaTxPageSet('${a.key}',${pg+1})" ${pg>=totalPages-1?'disabled':''}>›</button>
-      </div>` : ''}` : '';
-
-    return `
-    <div class="aa-block ${a.cls}">
-      <!-- Top: icon + name + value centered -->
-      <div class="aa-block-top">
-        <div class="aa-icon">${a.icon}</div>
-        <div class="aa-name">${a.name}</div>
-        <div class="aa-value">${val ? aaFmtVal(val) : '—'}</div>
-        <div class="aa-value-sub">${val ? aaFmtSub(val) : 'Chưa có dữ liệu'}</div>
-      </div>
-
-      <!-- Gauge (% of total, no target label) -->
-      <div class="aa-gauge-wrap">
-        <div class="aa-gauge-row">
-          <span class="aa-pct-actual">${pct}%</span>
-          <span style="font-size:10px;color:var(--text-muted)">tổng tài sản</span>
-        </div>
-        <div class="aa-gauge-bg">
-          <div class="aa-gauge-fill" style="width:${fillPct}%"></div>
-        </div>
-      </div>
-
-      <!-- Adjust: Date | Số tiền | Ghi chú | Lưu — 1 row -->
-      <div class="aa-adjust">
-        <div class="aa-adjust-title">± Điều chỉnh giá trị</div>
-        <div class="aa-adj-row">
-          <button class="aa-date-btn" id="aa-date-btn-${a.key}" title="Chọn ngày" onclick="aaCdpOpen('${a.key}')">📅</button>
-          <input class="aa-adj-input" id="aa-amt-${a.key}" type="text" inputmode="text"
-            placeholder="+/- ${currency==='USD'?'USD':'VNĐ'}"
-            oninput="fmtInputComma(this)">
-          <input class="aa-adj-input" id="aa-note-${a.key}" type="text"
-            placeholder="Ghi chú…">
-          <button class="aa-adj-btn" onclick="aaApplyAdj('${a.key}')">Lưu</button>
-        </div>
-        ${txHtml}
-      </div>
+  // 6 cards in 2 rows of 3 — labeled like Thu Chi quarters
+  const row1 = AA_ASSETS.slice(0, 3);
+  const row2 = AA_ASSETS.slice(3, 6);
+  const buildRow = assets => `
+    <div class="aa-asset-row">
+      ${assets.map(a => {
+        const val    = aaState[a.key]?.value || 0;
+        const pct    = aaGetPct(a.key);
+        const isSel  = _aaSelKey === a.key;
+        return `
+        <div class="aa-asset-card${isSel ? ' selected' : ''}" onclick="aaSelectCard('${a.key}')">
+          <div class="aa-card-header">
+            <span class="aa-card-icon">${a.icon}</span>
+            <span>${a.shortName}</span>
+          </div>
+          <div class="aa-card-row">
+            <span class="aa-card-lbl">GIÁ TRỊ</span>
+            <span class="aa-card-val${val ? '' : ' muted'}">${val ? aaFmtVal(val) : '—'}</span>
+          </div>
+          <div class="aa-card-row">
+            <span class="aa-card-lbl">TỶ TRỌNG</span>
+            <span class="aa-card-pct">${pct}%</span>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
-  }).join('');
 
-  // Legend
+  grid.innerHTML = `
+    <div class="aa-asset-section" style="margin-bottom:6px">${buildRow(row1)}</div>
+    <div class="aa-asset-section">${buildRow(row2)}</div>`;
+
+  aaRenderAccordion();
+
   const legend = document.getElementById('aaLegend');
   if (legend) {
     legend.innerHTML = AA_ASSETS.map(a => {
@@ -3222,10 +3446,72 @@ function aaRender() {
   }
 }
 
+function aaRenderAccordion() {
+  const el = document.getElementById('aaAccordion');
+  if (!el) return;
+  if (!_aaSelKey) { el.innerHTML = ''; return; }
+
+  const a   = AA_ASSETS.find(x => x.key === _aaSelKey);
+  const st  = aaState[_aaSelKey];
+  const txs = st.transactions || [];
+  const pg  = _aaTxPage[_aaSelKey] || 0;
+  const totalPages   = Math.ceil(txs.length / AA_TX_PER_PAGE) || 1;
+  const pageTxs      = txs.slice(pg * AA_TX_PER_PAGE, (pg+1) * AA_TX_PER_PAGE);
+  const globalOffset = pg * AA_TX_PER_PAGE;
+
+  const txHtml = txs.length ? `
+    <div class="aa-tx-list-sm">
+      ${pageTxs.map((tx, ti) => `
+        <div class="aa-tx-item-sm">
+          <span class="aa-tx-date">${tx.date}</span>
+          <span class="aa-tx-amt ${tx.amount>=0?'pos':'neg'}" style="font-size:11px">${tx.amount>=0?'+':''}${aaFmtVal(tx.amount)}</span>
+          <span class="aa-tx-note" style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.note||'—'}</span>
+          <button class="aa-tx-del" onclick="aaDelTx('${a.key}',${globalOffset+ti})" title="Xóa">✕</button>
+        </div>`).join('')}
+    </div>
+    ${totalPages > 1 ? `
+    <div class="aa-tx-pg-row">
+      <button class="aa-tx-pg-btn" onclick="aaTxPageSet('${a.key}',${pg-1})" ${pg===0?'disabled':''}>‹</button>
+      ${Array.from({length:totalPages},(_,i)=>`<button class="aa-tx-pg-btn${i===pg?' aa-tx-pg-active':''}" onclick="aaTxPageSet('${a.key}',${i})">${i+1}</button>`).join('')}
+      <button class="aa-tx-pg-btn" onclick="aaTxPageSet('${a.key}',${pg+1})" ${pg>=totalPages-1?'disabled':''}>›</button>
+    </div>` : ''}` : `<div style="font-size:11px;color:var(--text-muted);padding:4px 0">Chưa có giao dịch</div>`;
+
+  el.innerHTML = `
+  <div class="aa-accordion open">
+    <div class="aa-accordion-header" onclick="aaSelectCard('${a.key}')">
+      <div class="aa-accordion-title">
+        <span>${a.icon}</span><span>${a.name}</span>
+        <span style="font-size:12px;color:var(--green);font-weight:800;margin-left:4px">${aaFmtVal(st.value||0)}</span>
+      </div>
+      <span class="aa-accordion-arrow">▼</span>
+    </div>
+    <div class="aa-accordion-body">
+      <div class="aa-adj-row-compact">
+        <button class="aa-date-btn-sm" id="aa-date-btn-${a.key}" onclick="aaCdpOpen('${a.key}')">📅</button>
+        <input class="aa-adj-input-sm" id="aa-amt-${a.key}" type="text" inputmode="text"
+          placeholder="+/- ${currency==='USD'?'USD':'VNĐ'}" oninput="fmtInputComma(this)">
+        <input class="aa-adj-input-sm" id="aa-note-${a.key}" type="text" placeholder="Ghi chú…">
+        <button class="aa-adj-btn-sm" onclick="aaApplyAdj('${a.key}')">Lưu</button>
+      </div>
+      ${txHtml}
+    </div>
+  </div>`;
+}
+
+function aaSelectCard(key) {
+  _aaSelKey = _aaSelKey === key ? null : key;
+  aaRender();
+  if (_aaSelKey) {
+    setTimeout(() => {
+      document.getElementById('aaAccordion')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 60);
+  }
+}
+
 // ── Apply adjustment ──
 function aaApplyAdj(key) {
-  const amtEl  = document.getElementById(`aa-amt-${key}`);
-  const noteEl = document.getElementById(`aa-note-${key}`);
+  const amtEl   = document.getElementById(`aa-amt-${key}`);
+  const noteEl  = document.getElementById(`aa-note-${key}`);
   const dateBtn = document.getElementById(`aa-date-btn-${key}`);
   let amount = parseCommaNum(amtEl.value);
   if (!amount || isNaN(amount)) { showToast('Nhập số tiền +/- cần điều chỉnh', 'error'); return; }
@@ -3239,7 +3525,6 @@ function aaApplyAdj(key) {
   st.transactions.unshift({ date, amount, note });
   amtEl.value = '';
   noteEl.value = '';
-  // Reset date btn
   if (dateBtn) { dateBtn.dataset.date = ''; dateBtn.classList.remove('has-date'); }
   aaSaveLocal();
   aaSaveSupabase();
@@ -3261,18 +3546,16 @@ function aaDelTx(key, idx) {
   showToast('Đã xóa giao dịch', 'success');
 }
 
-// ── CDP integration for asset blocks ──
+// ── CDP integration ──
 function aaCdpOpen(assetKey) {
   _aaCdpAsset = assetKey;
   const btn = document.getElementById(`aa-date-btn-${assetKey}`);
   const existing = btn?.dataset.date;
   const base = existing ? new Date(existing + 'T00:00:00') : new Date();
-  _cdpCardIdx   = 'aa_' + assetKey;  // reuse CDP with namespaced key
   _cdpSelDate   = base.toISOString().split('T')[0];
   _cdpViewYear  = base.getFullYear();
   _cdpViewMonth = base.getMonth();
   cdpRender();
-  // Override OK button for asset context
   document.getElementById('cdpOkBtn').onclick = aaCdpConfirm;
   document.getElementById('cdpOverlay').classList.add('open');
 }
@@ -3293,6 +3576,38 @@ async function aaInit() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// HAMBURGER MOBILE NAV
+// ══════════════════════════════════════════════════════════════
+function hamToggle() {
+  const dd  = document.getElementById('hamDropdown');
+  const ov  = document.getElementById('hamOverlay');
+  const btn = document.getElementById('hamBtn');
+  const open = dd.classList.toggle('open');
+  ov.classList.toggle('open', open);
+  btn.textContent = open ? '✕' : '☰';
+}
+function hamClose() {
+  document.getElementById('hamDropdown').classList.remove('open');
+  document.getElementById('hamOverlay').classList.remove('open');
+  document.getElementById('hamBtn').textContent = '☰';
+}
+function hamNav(page) {
+  hamClose();
+  switchPage(page);
+}
+function hamSyncActive(page) {
+  ['debt','calendar','thuchi','asset'].forEach(p => {
+    const el = document.getElementById('hamTab' + p.charAt(0).toUpperCase() + p.slice(1).replace('thuchi','ThuChi').replace('calendar','Calendar').replace('debt','Debt').replace('asset','Asset'));
+    if (el) el.classList.toggle('active', p === page);
+  });
+  // Simpler: just toggle by id
+  document.getElementById('hamTabDebt')    ?.classList.toggle('active', page==='debt');
+  document.getElementById('hamTabCalendar')?.classList.toggle('active', page==='calendar');
+  document.getElementById('hamTabThuChi')  ?.classList.toggle('active', page==='thuchi');
+  document.getElementById('hamTabAsset')   ?.classList.toggle('active', page==='asset');
+}
+
+// ══════════════════════════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════════════════════════
 initTheme();
@@ -3306,8 +3621,6 @@ document.getElementById('loginPassword').addEventListener('keydown', e => { if(e
 document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') loginSubmit(); });
 
 // Auth listener will call loadState + switchPage once session is confirmed
-// If no session, login overlay stays visible
-// Restore page tab immediately (data loads after auth)
 switchPage(activePage);
 </script>
 </body>
