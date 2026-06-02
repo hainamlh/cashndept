@@ -1374,6 +1374,10 @@ body {
       <span id="loginBtnText">Đăng nhập</span>
     </button>
     <div class="login-forgot"><a onclick="loginForgot()">Quên mật khẩu?</a></div>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+      <button onclick="nmDebug()" style="width:100%;padding:8px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">🔍 Debug thông tin kỹ thuật</button>
+      <div id="nmDebugOut" style="display:none;margin-top:8px;padding:10px;background:var(--bg-0);border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:10px;color:var(--text-primary);white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto"></div>
+    </div>
   </div>
 </div>
 
@@ -3623,6 +3627,71 @@ function hamSyncActive(page) {
   document.getElementById('hamTabCalendar')?.classList.toggle('active', page==='calendar');
   document.getElementById('hamTabThuChi')  ?.classList.toggle('active', page==='thuchi');
   document.getElementById('hamTabAsset')   ?.classList.toggle('active', page==='asset');
+}
+
+// ══════════════════════════════════════════════════════════════
+// DEBUG TOOL
+// ══════════════════════════════════════════════════════════════
+async function nmDebug() {
+  const out = document.getElementById('nmDebugOut');
+  out.style.display = 'block';
+  out.textContent = 'Đang kiểm tra...\n';
+  const lines = [];
+
+  // 1. Session
+  try {
+    const { data: { session }, error } = await sb.auth.getSession();
+    lines.push('SESSION: ' + (session ? '✓ ' + session.user.email : '✗ null') + (error?' ERR:'+error.message:''));
+    lines.push('USER_ID: ' + (session?.user?.id || 'null'));
+    lines.push('syncCode var: ' + (syncCode || 'empty'));
+    lines.push('currentUser: ' + (currentUser?.email || 'null'));
+  } catch(e) { lines.push('SESSION ERR: '+e.message); }
+
+  // 2. Test read trading_calendar
+  try {
+    const { data, error, status } = await sb.from('trading_calendar').select('*').limit(1);
+    lines.push('\nCAL READ: status='+status+' rows='+(data?.length??'null')+(error?' ERR:'+error.message+' code:'+error.code:''));
+  } catch(e) { lines.push('\nCAL READ ERR: '+e.message); }
+
+  // 3. Test read thu_chi
+  try {
+    const { data, error, status } = await sb.from('thu_chi').select('*').limit(1);
+    lines.push('TC READ: status='+status+' rows='+(data?.length??'null')+(error?' ERR:'+error.message+' code:'+error.code:''));
+  } catch(e) { lines.push('TC READ ERR: '+e.message); }
+
+  // 4. Test write trading_calendar (nếu có syncCode)
+  if (syncCode) {
+    try {
+      const testDate = '1970-01-01';
+      const { error: delE } = await sb.from('trading_calendar').delete().eq('sync_code', syncCode).eq('date', testDate);
+      const { error: insE } = await sb.from('trading_calendar').insert({ sync_code: syncCode, date: testDate, pnl: 0, note: 'debug' });
+      if (insE) lines.push('CAL WRITE ERR: '+insE.message+' code:'+insE.code);
+      else {
+        lines.push('CAL WRITE: ✓');
+        await sb.from('trading_calendar').delete().eq('sync_code', syncCode).eq('date', testDate);
+      }
+    } catch(e) { lines.push('CAL WRITE EX: '+e.message); }
+
+    // 5. Test write thu_chi
+    try {
+      const testMonth = '1970-01';
+      const { error: delE } = await sb.from('thu_chi').delete().eq('sync_code', syncCode).eq('month', testMonth);
+      const { error: insE } = await sb.from('thu_chi').insert({ sync_code: syncCode, month: testMonth, thu: 0, chi: 0, note: 'debug' });
+      if (insE) lines.push('TC WRITE ERR: '+insE.message+' code:'+insE.code);
+      else {
+        lines.push('TC WRITE: ✓');
+        await sb.from('thu_chi').delete().eq('sync_code', syncCode).eq('month', testMonth);
+      }
+    } catch(e) { lines.push('TC WRITE EX: '+e.message); }
+  } else {
+    lines.push('\nSKIP WRITE: syncCode trống');
+  }
+
+  // 6. LocalStorage keys
+  const lsKeys = Object.keys(localStorage).filter(k=>k.startsWith('sb-')||k.includes('nmoney')||k.includes('debt'));
+  lines.push('\nLS KEYS: '+lsKeys.join(', '));
+
+  out.textContent = lines.join('\n');
 }
 
 // ══════════════════════════════════════════════════════════════
