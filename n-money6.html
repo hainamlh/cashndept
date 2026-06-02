@@ -2758,50 +2758,51 @@ async function calSaveRecord(key, usdVal, note) {
   calData[key] = {pnl: usdVal, note: note||''};
   calSaveLocal();
   if (!syncCode) return true;
-  // Race: 8s timeout vs actual request
-  const withTimeout = (promise, ms) => Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + ms + 'ms')), ms))
-  ]);
   try {
-    // Delete first, then insert (upsert causes timeout with anon key)
-    await withTimeout(
-      sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key),
-      5000
+    // Use fetch directly — Supabase JS client has timeout issues with this table
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Prefer': 'return=minimal'
+    };
+    // Delete
+    const delRes = await fetch(
+      `${SB_URL}/rest/v1/trading_calendar?sync_code=eq.${encodeURIComponent(syncCode)}&date=eq.${key}`,
+      { method: 'DELETE', headers }
     );
+    if (!delRes.ok && delRes.status !== 404) throw new Error('Delete failed: ' + delRes.status);
+    // Insert
     if (usdVal !== null) {
-      const { error } = await withTimeout(
-        sb.from(CAL_TABLE).insert({
-          sync_code: syncCode,
-          date: key,
-          pnl: +parseFloat(usdVal).toFixed(6),
-          note: note || ''
-        }),
-        5000
+      const insRes = await fetch(
+        `${SB_URL}/rest/v1/trading_calendar`,
+        { method: 'POST', headers, body: JSON.stringify({ sync_code: syncCode, date: key, pnl: +parseFloat(usdVal).toFixed(6), note: note||'' }) }
       );
-      if (error) throw error;
+      if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status + ' ' + await insRes.text());
     }
     return true;
   } catch(e) {
     const msg = e?.message || String(e);
     showToast('⚠ ' + msg.slice(0, 60), 'error');
     console.warn('Calendar save error:', msg);
-    return true; // local saved — close modal anyway
+    return true;
   }
 }
 
 async function calDelRecord(key) {
-  // Always delete locally first
   delete calData[key];
   calSaveLocal();
   if (!syncCode) return true;
   try {
-    const { error } = await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
-    if (error) throw error;
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    await fetch(
+      `${SB_URL}/rest/v1/trading_calendar?sync_code=eq.${encodeURIComponent(syncCode)}&date=eq.${key}`,
+      { method: 'DELETE', headers }
+    );
     return true;
   } catch(e) {
     console.warn('Calendar delete error:', e?.message || e);
-    return true; // local delete succeeded, close modal anyway
+    return true;
   }
 }
 
@@ -3177,22 +3178,25 @@ async function tcSaveRecord(key, thu, chi, note) {
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
   if (!syncCode) return true;
-  const withTimeout = (promise, ms) => Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + ms + 'ms')), ms))
-  ]);
   try {
-    await withTimeout(
-      sb.from(TC_TABLE).delete().eq('sync_code', syncCode).eq('month', key),
-      5000
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Prefer': 'return=minimal'
+    };
+    // Delete
+    const delRes = await fetch(
+      `${SB_URL}/rest/v1/thu_chi?sync_code=eq.${encodeURIComponent(syncCode)}&month=eq.${key}`,
+      { method: 'DELETE', headers }
     );
-    const { error } = await withTimeout(
-      sb.from(TC_TABLE).insert({
-        sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
-      }),
-      5000
+    if (!delRes.ok && delRes.status !== 404) throw new Error('Delete failed: ' + delRes.status);
+    // Insert
+    const insRes = await fetch(
+      `${SB_URL}/rest/v1/thu_chi`,
+      { method: 'POST', headers, body: JSON.stringify({ sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||'' }) }
     );
-    if (error) throw error;
+    if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status + ' ' + await insRes.text());
     tcSetSync('ok');
     return true;
   } catch(e) {
