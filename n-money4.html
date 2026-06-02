@@ -1854,22 +1854,22 @@ function loginShowLogout() {
       <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Đăng xuất?</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">${email}</div>
       <div style="display:flex;gap:10px">
-        <button id="_logoutCancel" style="flex:1;padding:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text-secondary);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Hủy</button>
-        <button id="_logoutOk" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--red),#ff6b6b);border:none;border-radius:10px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Đăng xuất</button>
+        <button class="_logoutCancel" style="flex:1;padding:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text-secondary);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Hủy</button>
+        <button class="_logoutOk" style="flex:1;padding:10px;background:linear-gradient(135deg,#e05555,#ff6b6b);border:none;border-radius:10px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Đăng xuất</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
-  document.getElementById('_logoutCancel').onclick = () => modal.remove();
-  document.getElementById('_logoutOk').onclick = () => {
+  // querySelector on modal element — không dùng getElementById vì có thể trùng
+  modal.querySelector('._logoutCancel').addEventListener('click', () => modal.remove());
+  modal.querySelector('._logoutOk').addEventListener('click', () => {
     modal.remove();
     sb.auth.signOut().catch(() => {}).finally(() => {
       currentUser = null; syncCode = '';
-      // Clear all Supabase session keys from localStorage
       Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
       updateUserChip(null);
       document.getElementById('loginOverlay').classList.remove('hidden');
     });
-  };
+  });
 }
 
 // Legacy stubs
@@ -2108,9 +2108,18 @@ async function loadState() {
   if (local) { try { const p=JSON.parse(local); if(p.cards) state.cards=p.cards; } catch(e){} }
   if (!syncCode) { renderDashboard(); return; }
   try {
-    const {data,error} = await sb.from('debt_cards').select('*').eq('sync_code',syncCode);
+    // Load rows thuộc user này
+    const {data, error} = await sb.from('debt_cards').select('*').eq('sync_code', syncCode);
     if (!error && data && data.length) {
       state.cards = data.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
+    } else if (!data || data.length === 0) {
+      // Migrate rows cũ không có sync_code
+      const {data: old} = await sb.from('debt_cards').select('*').is('sync_code', null);
+      if (old && old.length > 0) {
+        await sb.from('debt_cards').update({ sync_code: syncCode }).is('sync_code', null);
+        state.cards = old.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
+        showToast('✓ Đã gắn dữ liệu cũ vào tài khoản', 'success');
+      }
     }
   } catch(e) { console.warn('Supabase load error:', e); }
   renderDashboard();
@@ -2455,14 +2464,24 @@ async function calLoadMonth() {
   calSetSync('spin');
   const from=calDk(calY,calM,1), to=calDk(calY,calM,new Date(calY,calM+1,0).getDate());
   try {
+    // 1. Load rows thuộc user này
     const { data, error } = await sb
-      .from(CAL_TABLE)
-      .select('date,pnl,note')
+      .from(CAL_TABLE).select('date,pnl,note')
       .eq('sync_code', syncCode)
-      .gte('date', from)
-      .lte('date', to);
+      .gte('date', from).lte('date', to);
     if (error) throw error;
-    if (data) {
+
+    // 2. Nếu chưa có data, thử migrate rows cũ (sync_code IS NULL) → gán user
+    if (!data || data.length === 0) {
+      const { data: old } = await sb.from(CAL_TABLE).select('date,pnl,note')
+        .is('sync_code', null).gte('date', from).lte('date', to);
+      if (old && old.length > 0) {
+        await sb.from(CAL_TABLE).update({ sync_code: syncCode })
+          .is('sync_code', null).gte('date', from).lte('date', to);
+        old.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
+        calSaveLocal();
+      }
+    } else {
       data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
       calSaveLocal();
     }
@@ -2839,18 +2858,27 @@ async function tcLoadYear() {
   if (!syncCode) return;
   tcSetSync('spin');
   try {
-    const { data, error } = await sb
-      .from(TC_TABLE)
-      .select('month,thu,chi,note')
-      .eq('sync_code', syncCode)
-      .gte('month', `${tcYear}-01`)
-      .lte('month', `${tcYear}-12`)
+    // 1. Load rows thuộc user này
+    const { data, error } = await sb.from(TC_TABLE)
+      .select('month,thu,chi,note').eq('sync_code', syncCode)
+      .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`)
       .order('month', { ascending: true });
     if (error) throw error;
-    if (data && data.length > 0) {
-      data.forEach(r => {
-        tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' };
-      });
+
+    // 2. Nếu chưa có data, thử migrate rows cũ (sync_code IS NULL)
+    if (!data || data.length === 0) {
+      const { data: old } = await sb.from(TC_TABLE).select('month,thu,chi,note')
+        .is('sync_code', null)
+        .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`);
+      if (old && old.length > 0) {
+        await sb.from(TC_TABLE).update({ sync_code: syncCode })
+          .is('sync_code', null)
+          .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`);
+        old.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
+        tcSaveLocal();
+      }
+    } else {
+      data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
       tcSaveLocal();
     }
     tcSetSync('ok');
