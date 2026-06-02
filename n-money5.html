@@ -930,23 +930,25 @@ body {
   .page-shell { border-left: none; border-right: none; box-shadow: none; }
 }
 @media (max-width: 768px) {
-  /* ── Topbar: 2 rows on mobile ── */
+  /* ── Topbar: 1 hàng duy nhất ── */
   .topbar {
     height: auto;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding: 6px 10px;
     gap: 6px;
     align-items: center;
+    justify-content: space-between;
   }
   .topbar-left {
-    flex: 1 1 100%;
+    flex: none;
     gap: 8px;
-    justify-content: space-between;
+    align-items: center;
   }
   .topbar-right {
     flex: none;
     gap: 5px;
     justify-content: flex-end;
+    margin-left: auto;
   }
   .user-chip-email { display: none; }
   .user-chip { padding: 3px 6px; gap: 4px; }
@@ -3523,15 +3525,26 @@ async function aaLoadSupabase() {
     if (error) throw error;
     if (data && data.length) {
       data.forEach(r => {
-        if (aaState[r.asset_key] !== undefined) {
+        if (aaState[r.asset_key] !== undefined)
           aaState[r.asset_key] = { value: r.value||0, transactions: r.transactions||[] };
-        }
       });
       aaSaveLocal();
+    } else {
+      // Migrate rows cũ không có sync_code
+      const { data: old } = await sb.from(AA_TABLE).select('*').is('sync_code', null);
+      if (old && old.length) {
+        await sb.from(AA_TABLE).update({ sync_code: syncCode }).is('sync_code', null);
+        old.forEach(r => {
+          if (aaState[r.asset_key] !== undefined)
+            aaState[r.asset_key] = { value: r.value||0, transactions: r.transactions||[] };
+        });
+        aaSaveLocal();
+        showToast('✓ Đã gắn dữ liệu tài sản vào tài khoản', 'success');
+      }
     }
     aaSetSync('ok');
   } catch(e) {
-    console.warn('AA Supabase load error:', e);
+    console.warn('AA load error:', e?.message || e);
     aaSetSync('err');
   }
 }
@@ -3595,36 +3608,29 @@ function aaRender() {
   const grid = document.getElementById('aaGrid');
   if (!grid) return;
 
-  // 6 cards in 2 rows of 3 — labeled like Thu Chi quarters
-  const row1 = AA_ASSETS.slice(0, 3);
-  const row2 = AA_ASSETS.slice(3, 6);
-  const buildRow = assets => `
-    <div class="aa-asset-row">
-      ${assets.map(a => {
-        const val    = aaState[a.key]?.value || 0;
-        const pct    = aaGetPct(a.key);
-        const isSel  = _aaSelKey === a.key;
-        return `
-        <div class="aa-asset-card${isSel ? ' selected' : ''}" onclick="aaSelectCard('${a.key}')">
-          <div class="aa-card-header">
-            <span class="aa-card-icon">${a.icon}</span>
-            <span>${a.shortName}</span>
-          </div>
-          <div class="aa-card-row">
-            <span class="aa-card-lbl">GIÁ TRỊ</span>
-            <span class="aa-card-val${val ? '' : ' muted'}">${val ? aaFmtVal(val) : '—'}</span>
-          </div>
-          <div class="aa-card-row">
-            <span class="aa-card-lbl">TỶ TRỌNG</span>
-            <span class="aa-card-pct">${pct}%</span>
-          </div>
-        </div>`;
-      }).join('')}
+  // 1 grid duy nhất — desktop: 3 cột, mobile: 2 cột → 6 cards = 2 hàng×3 hoặc 3 hàng×2
+  const buildCard = a => {
+    const val   = aaState[a.key]?.value || 0;
+    const pct   = aaGetPct(a.key);
+    const isSel = _aaSelKey === a.key;
+    return `
+    <div class="aa-asset-card${isSel ? ' selected' : ''}" onclick="aaSelectCard('${a.key}')">
+      <div class="aa-card-header">
+        <span class="aa-card-icon">${a.icon}</span>
+        <span>${a.shortName}</span>
+      </div>
+      <div class="aa-card-row">
+        <span class="aa-card-lbl">GIÁ TRỊ</span>
+        <span class="aa-card-val${val ? '' : ' muted'}">${val ? aaFmtVal(val) : '—'}</span>
+      </div>
+      <div class="aa-card-row">
+        <span class="aa-card-lbl">TỶ TRỌNG</span>
+        <span class="aa-card-pct">${pct}%</span>
+      </div>
     </div>`;
+  };
 
-  grid.innerHTML = `
-    <div class="aa-asset-section" style="margin-bottom:6px">${buildRow(row1)}</div>
-    <div class="aa-asset-section">${buildRow(row2)}</div>`;
+  grid.innerHTML = `<div class="aa-asset-row">${AA_ASSETS.map(buildCard).join('')}</div>`;
 
   aaRenderAccordion();
 
