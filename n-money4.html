@@ -1200,9 +1200,6 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
-  justify-content: stretch;
-  max-width: 83%;
-  margin: 0 auto;
 }
 
 /* Individual asset card */
@@ -1324,13 +1321,10 @@ body {
 .aa-tx-pg-row { display: flex; align-items: center; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
 
 @media (max-width: 768px) {
-  .aa-asset-row { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-  .aa-asset-card { padding: 11px 8px 13px; border-radius: 9px; }
+  .aa-asset-row { grid-template-columns: 1fr 1fr; gap: 5px; }
+  .aa-asset-card { padding: 11px 10px 13px; border-radius: 9px; }
   .aa-card-val { font-size: 12px; }
   .aa-adj-row-compact { grid-template-columns: 30px 1fr 1fr 46px; gap: 4px; }
-}
-@media (max-width: 480px) {
-  .aa-asset-row { grid-template-columns: 1fr 1fr; }
 }
 
 </style>
@@ -1846,16 +1840,32 @@ async function loginForgot() {
 
 function loginShowLogout() {
   if (!currentUser) return;
-  if (confirm(`Đăng xuất khỏi ${currentUser.email}?`)) {
+  // Dùng modal thay vì confirm() vì confirm() bị block trên mobile browser
+  const email = currentUser.email;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px 20px;max-width:320px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.4)">
+      <div style="font-size:22px;margin-bottom:10px">👤</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Đăng xuất?</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">${email}</div>
+      <div style="display:flex;gap:10px">
+        <button id="_logoutCancel" style="flex:1;padding:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text-secondary);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Hủy</button>
+        <button id="_logoutOk" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--red),#ff6b6b);border:none;border-radius:10px;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">Đăng xuất</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('_logoutCancel').onclick = () => modal.remove();
+  document.getElementById('_logoutOk').onclick = () => {
+    modal.remove();
     sb.auth.signOut().catch(() => {}).finally(() => {
-      // Force clear local state even if signOut fails
-      currentUser = null;
-      syncCode = '';
-      localStorage.removeItem('sb-' + SB_URL.split('//')[1].split('.')[0] + '-auth-token');
+      currentUser = null; syncCode = '';
+      // Clear all Supabase session keys from localStorage
+      Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
       updateUserChip(null);
       document.getElementById('loginOverlay').classList.remove('hidden');
     });
-  }
+  };
 }
 
 // Legacy stubs
@@ -2437,12 +2447,14 @@ function calSetSync(state, msg='') {
 }
 
 async function calLoadMonth() {
+  if (!syncCode) return;
   calSetSync('spin');
   const from=calDk(calY,calM,1), to=calDk(calY,calM,new Date(calY,calM+1,0).getDate());
   try {
     const { data, error } = await sb
       .from(CAL_TABLE)
       .select('date,pnl,note')
+      .eq('sync_code', syncCode)
       .gte('date', from)
       .lte('date', to);
     if (error) throw error;
@@ -2454,22 +2466,25 @@ async function calLoadMonth() {
   } catch(e) {
     console.warn('Calendar load error:', e?.message || e);
     calSetSync('err');
-    // fall back to localStorage data already in calData
   }
 }
 
 async function calSaveRecord(key, usdVal, note) {
-  // Always save locally first
+  if (!syncCode) return false;
   calData[key] = {pnl: usdVal, note: note||''};
   calSaveLocal();
   try {
-    const payload = {
-      date: key,
-      pnl: usdVal === null ? null : +parseFloat(usdVal).toFixed(6),
-      note: note || ''
-    };
-    const { error } = await sb.from(CAL_TABLE).upsert(payload, {onConflict: 'date'});
-    if (error) throw error;
+    // Delete then insert to avoid onConflict multi-column bug
+    await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
+    if (usdVal !== null) {
+      const { error } = await sb.from(CAL_TABLE).insert({
+        sync_code: syncCode,
+        date: key,
+        pnl: +parseFloat(usdVal).toFixed(6),
+        note: note || ''
+      });
+      if (error) throw error;
+    }
     return true;
   } catch(e) {
     console.warn('Calendar save error:', e?.message || e);
@@ -2478,10 +2493,11 @@ async function calSaveRecord(key, usdVal, note) {
 }
 
 async function calDelRecord(key) {
+  if (!syncCode) return false;
   delete calData[key];
   calSaveLocal();
   try {
-    const { error } = await sb.from(CAL_TABLE).delete().eq('date', key);
+    const { error } = await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
     if (error) throw error;
     return true;
   } catch(e) {
@@ -2816,11 +2832,13 @@ function tcSetSync(state, errMsg) {
 
 // ── Supabase load year — same pattern as Trading Calendar ──
 async function tcLoadYear() {
+  if (!syncCode) return;
   tcSetSync('spin');
   try {
     const { data, error } = await sb
       .from(TC_TABLE)
       .select('month,thu,chi,note')
+      .eq('sync_code', syncCode)
       .gte('month', `${tcYear}-01`)
       .lte('month', `${tcYear}-12`)
       .order('month', { ascending: true });
@@ -2836,18 +2854,19 @@ async function tcLoadYear() {
     const msg = e?.message || String(e);
     console.warn('ThuChi load error:', msg);
     tcSetSync('err', msg);
-    showToast('Thu Chi load: ' + msg.slice(0,80), 'error');
   }
 }
 
-// ── Save — same pattern as Trading Calendar's calSaveRecord ──
 async function tcSaveRecord(key, thu, chi, note) {
+  if (!syncCode) return false;
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
   try {
-    const { error } = await sb
-      .from(TC_TABLE)
-      .upsert({ month: key, thu: +thu||0, chi: +chi||0, note: note||'' }, { onConflict: 'month' });
+    // Delete then insert to avoid onConflict sync_code+month bug
+    await sb.from(TC_TABLE).delete().eq('sync_code', syncCode).eq('month', key);
+    const { error } = await sb.from(TC_TABLE).insert({
+      sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
+    });
     if (error) throw error;
     tcSetSync('ok');
     return true;
@@ -2855,17 +2874,16 @@ async function tcSaveRecord(key, thu, chi, note) {
     const msg = e?.message || String(e);
     console.warn('ThuChi save error:', msg);
     tcSetSync('err', msg);
-    showToast('Thu Chi save: ' + msg.slice(0,80), 'error');
     return false;
   }
 }
 
-// ── Delete — same pattern as Trading Calendar's calDelRecord ──
 async function tcDelRecord(key) {
+  if (!syncCode) return false;
   delete tcData[key];
   tcSaveLocal();
   try {
-    const { error } = await sb.from(TC_TABLE).delete().eq('month', key);
+    const { error } = await sb.from(TC_TABLE).delete().eq('sync_code', syncCode).eq('month', key);
     if (error) throw error;
     tcSetSync('ok');
     return true;
@@ -3622,6 +3640,27 @@ document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.ke
 
 // Auth listener will call loadState + switchPage once session is confirmed
 switchPage(activePage);
+
+// Restore session từ localStorage nếu đã đăng nhập trước đó (thiết bị 2)
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session?.user && !currentUser) {
+    // onAuthStateChange sẽ tự fire với INITIAL_SESSION — không cần làm gì thêm
+    // Nhưng nếu không fire (một số browser), xử lý trực tiếp:
+    if (!_authHandling) {
+      _authHandling = true;
+      currentUser = session.user;
+      syncCode    = session.user.id;
+      document.getElementById('loginOverlay').classList.add('hidden');
+      updateUserChip(currentUser);
+      loadState().then(() => {
+        if (activePage === 'thuchi')   tcInit();
+        if (activePage === 'calendar') calInit();
+        if (activePage === 'asset')    aaInit();
+        else aaLoadLocal();
+      }).finally(() => { _authHandling = false; });
+    }
+  }
+});
 </script>
 </body>
 </html>
