@@ -2724,9 +2724,6 @@ async function calLoadMonth() {
   if (!syncCode) return;
   calSetSync('spin');
   const from=calDk(calY,calM,1), to=calDk(calY,calM,new Date(calY,calM+1,0).getDate());
-  // Clear current month's data to avoid stale display on month change
-  const dim = new Date(calY,calM+1,0).getDate();
-  for (let d=1; d<=dim; d++) { delete calData[calDk(calY,calM,d)]; }
   try {
     // 1. Load rows thuộc user này
     const { data, error } = await sb
@@ -3135,10 +3132,6 @@ function tcSetSync(state, errMsg) {
 async function tcLoadYear() {
   if (!syncCode) return;
   tcSetSync('spin');
-  // Clear current year's data before loading to avoid stale data on year change
-  for (let m = 1; m <= 12; m++) {
-    delete tcData[`${tcYear}-${String(m).padStart(2,'0')}`];
-  }
   try {
     // 1. Load rows thuộc user này
     const { data, error } = await sb.from(TC_TABLE)
