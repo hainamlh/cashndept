@@ -1282,15 +1282,16 @@ body {
   /* Tabs on row 2, full width */
   .page-tabs {
     display: flex !important;
-    order: 2;
-    width: calc(100% + 20px);
-    margin: 0 -10px;
+    order: 3;
+    flex-basis: 100%;
+    width: 100%;
     border-radius: 0;
     border: none;
     border-top: 1px solid var(--border);
     background: var(--bg-1);
-    padding: 5px 8px;
+    padding: 5px 8px 6px;
     gap: 4px;
+    margin: 0;
   }
   .page-tab {
     flex: 1;
@@ -1598,13 +1599,13 @@ body {
       </a>
       <!-- Hamburger (mobile only) -->
       <button class="ham-btn" id="hamBtn" onclick="hamToggle()" title="Menu">☰</button>
-      <!-- Page Tabs (desktop) -->
-      <div class="page-tabs">
-        <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt</button>
-        <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading</button>
-        <button class="page-tab" id="tabThuChi" onclick="switchPage('thuchi')">📊 Thu Chi</button>
-        <button class="page-tab" id="tabAsset" onclick="switchPage('asset')">🏦 Phân bổ tài sản</button>
-      </div>
+    </div>
+    <!-- Page Tabs — direct child of topbar so mobile row-order works -->
+    <div class="page-tabs">
+      <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt</button>
+      <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading</button>
+      <button class="page-tab" id="tabThuChi" onclick="switchPage('thuchi')">📊 Thu Chi</button>
+      <button class="page-tab" id="tabAsset" onclick="switchPage('asset')">🏦 Phân bổ tài sản</button>
     </div>
     <div class="topbar-right">
       <div class="currency-toggle" title="Chọn đơn vị tiền tệ">
