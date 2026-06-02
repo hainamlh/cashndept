@@ -2316,17 +2316,15 @@ function saveState() {
 async function saveToSupabase() {
   if (!syncCode) return;
   try {
-    // Delete all rows for this sync_code first, then re-insert
-    // Avoids supabase-js v2 onConflict multi-column quoting bug (400 Bad Request)
-    const { error: delErr } = await sb.from('debt_cards').delete().eq('sync_code', syncCode);
-    if (delErr) throw delErr;
+    const headers = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/debt_cards?sync_code=eq.${encodeURIComponent(syncCode)}`, { method: 'DELETE', headers });
     if (state.cards.length === 0) { updateSyncStatus(); return; }
     const rows = state.cards.map(c => {
       if (!c._key) c._key = c.bank + '_' + (c._createdAt || (c._createdAt = Date.now()));
       return { sync_code: syncCode, card_key: c._key, bank: c.bank||'', amount: c.amount||0, due_date: c.dueDate||null, card_type: c.cardType||null, min_payment: c.minPayment||null, note: c.note||null, transactions: c.transactions||[] };
     });
-    const { error: insErr } = await sb.from('debt_cards').insert(rows);
-    if (insErr) throw insErr;
+    const insRes = await fetch(`${SB_URL}/rest/v1/debt_cards`, { method: 'POST', headers, body: JSON.stringify(rows) });
+    if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status);
     updateSyncStatus();
   } catch(e) { console.warn('Supabase save error:', e); }
 }
@@ -2336,18 +2334,12 @@ async function loadState() {
   if (local) { try { const p=JSON.parse(local); if(p.cards) state.cards=p.cards; } catch(e){} }
   if (!syncCode) { renderDashboard(); return; }
   try {
-    // Load rows thuộc user này
-    const {data, error} = await sb.from('debt_cards').select('*').eq('sync_code', syncCode);
-    if (!error && data && data.length) {
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const res = await fetch(`${SB_URL}/rest/v1/debt_cards?sync_code=eq.${encodeURIComponent(syncCode)}&select=*`, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
+    if (data && data.length) {
       state.cards = data.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
-    } else if (!data || data.length === 0) {
-      // Migrate rows cũ không có sync_code
-      const {data: old} = await sb.from('debt_cards').select('*').is('sync_code', null);
-      if (old && old.length > 0) {
-        await sb.from('debt_cards').update({ sync_code: syncCode }).is('sync_code', null);
-        state.cards = old.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
-        showToast('✓ Đã gắn dữ liệu cũ vào tài khoản', 'success');
-      }
     }
   } catch(e) { console.warn('Supabase load error:', e); }
   renderDashboard();
@@ -3647,10 +3639,11 @@ async function aaSaveSupabase() {
       value: aaState[a.key].value || 0,
       transactions: aaState[a.key].transactions || []
     }));
-    // delete+insert (upsert causes timeout with anon key)
-    await sb.from(AA_TABLE).delete().eq('sync_code', syncCode);
-    const { error: insErr } = await sb.from(AA_TABLE).insert(rows);
-    if (insErr) throw insErr;
+    // delete+insert via fetch directly
+    const headers = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/asset_allocation?sync_code=eq.${encodeURIComponent(syncCode)}`, { method: 'DELETE', headers });
+    const insRes = await fetch(`${SB_URL}/rest/v1/asset_allocation`, { method: 'POST', headers, body: JSON.stringify(rows) });
+    if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status);
     aaSetSync('ok');
   } catch(e) {
     console.warn('AA Supabase save error:', e);
@@ -3662,26 +3655,16 @@ async function aaLoadSupabase() {
   if (!syncCode) return;
   try {
     aaSetSync('spin');
-    const { data, error } = await sb.from(AA_TABLE).select('*').eq('sync_code', syncCode);
-    if (error) throw error;
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const res = await fetch(`${SB_URL}/rest/v1/asset_allocation?sync_code=eq.${encodeURIComponent(syncCode)}&select=*`, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
     if (data && data.length) {
       data.forEach(r => {
         if (aaState[r.asset_key] !== undefined)
           aaState[r.asset_key] = { value: r.value||0, transactions: r.transactions||[] };
       });
       aaSaveLocal();
-    } else {
-      // Migrate rows cũ không có sync_code
-      const { data: old } = await sb.from(AA_TABLE).select('*').is('sync_code', null);
-      if (old && old.length) {
-        await sb.from(AA_TABLE).update({ sync_code: syncCode }).is('sync_code', null);
-        old.forEach(r => {
-          if (aaState[r.asset_key] !== undefined)
-            aaState[r.asset_key] = { value: r.value||0, transactions: r.transactions||[] };
-        });
-        aaSaveLocal();
-        showToast('✓ Đã gắn dữ liệu tài sản vào tài khoản', 'success');
-      }
     }
     aaSetSync('ok');
   } catch(e) {
