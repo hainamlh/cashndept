@@ -2730,8 +2730,11 @@ async function calLoadMonth() {
     if (!res.ok) throw new Error('Load failed: ' + res.status);
     const data = await res.json();
     console.log('calLoadMonth rows:', data.length, JSON.stringify(data));
+    // Clear current month's keys before merging server data
+    // so deleted records on other devices are reflected correctly
+    const dim = new Date(calY, calM+1, 0).getDate();
+    for (let d = 1; d <= dim; d++) delete calData[calDk(calY, calM, d)];
     data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
-    console.log('calData after load:', JSON.stringify(calData));
     calSaveLocal();
     calSetSync('ok');
   } catch(e) {
@@ -2746,8 +2749,7 @@ async function calSaveRecord(key, usdVal, note) {
   calSaveLocal();
   // Restore syncCode from localStorage if missing
   if (!syncCode) syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
-  if (!syncCode) { showToast('⚠ Chưa có syncCode — chưa đăng nhập?', 'error'); return true; }
-  showToast('Sync: ' + syncCode.slice(0,8) + '...', '');
+  if (!syncCode) { showToast('⚠ Chưa đăng nhập', 'error'); return true; }
   try {
     // Use fetch directly — Supabase JS client has timeout issues with this table
     const headers = {
