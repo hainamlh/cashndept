@@ -1260,7 +1260,85 @@ body {
 
 @media (max-width: 768px) {
   .page-tabs { display: none; }
-  .ham-btn { display: flex; }
+  .ham-btn { display: none; } /* hide hamburger — replaced by bottom nav */
+  /* Push content above bottom nav */
+  .page-shell { padding-bottom: 58px; }
+}
+
+/* ══ BOTTOM NAV (mobile only) ════════════════════════════════ */
+.bottom-nav {
+  display: none;
+}
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 500;
+    background: var(--bg-1);
+    border-top: 1px solid var(--border);
+    height: 58px;
+    align-items: stretch;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+    /* safe area for notch phones */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    padding: 0 4px;
+    position: relative;
+  }
+  .bottom-nav-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 2px;
+    border-radius: 0 0 3px 3px;
+    background: var(--gold);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .bottom-nav-item.active {
+    color: var(--gold);
+  }
+  .bottom-nav-item.active::before {
+    opacity: 1;
+  }
+  .bottom-nav-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+  /* topbar on mobile: tighten up, move controls to second row */
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 48px;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .topbar-left {
+    order: 1;
+    flex: 0 0 auto;
+  }
+  .topbar-right {
+    order: 2;
+    flex: 1;
+    justify-content: flex-end;
+  }
 }
 
 /* ══ ASSET ALLOCATION — THU CHI STYLE ═══════════════════════ */
@@ -1580,6 +1658,26 @@ body {
     </div>
   </header>
 
+  <!-- ═══ BOTTOM NAV (mobile) ════════════════════════════════ -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" id="bnDebt"     onclick="switchPage('debt')">
+      <span class="bottom-nav-icon">💳</span>
+      <span>Debt</span>
+    </button>
+    <button class="bottom-nav-item"        id="bnCalendar" onclick="switchPage('calendar')">
+      <span class="bottom-nav-icon">📅</span>
+      <span>Trading</span>
+    </button>
+    <button class="bottom-nav-item"        id="bnThuChi"   onclick="switchPage('thuchi')">
+      <span class="bottom-nav-icon">📊</span>
+      <span>Thu Chi</span>
+    </button>
+    <button class="bottom-nav-item"        id="bnAsset"    onclick="switchPage('asset')">
+      <span class="bottom-nav-icon">🏦</span>
+      <span>Phân bổ</span>
+    </button>
+  </nav>
+
   <!-- ═══ DEBT TRACKER VIEW ════════════════════════════════════ -->
   <div class="page-view active" id="view-debt">
     <div class="dt-layout">
@@ -1834,6 +1932,11 @@ function switchPage(page) {
   document.getElementById('hamTabCalendar')?.classList.toggle('active', page==='calendar');
   document.getElementById('hamTabThuChi')  ?.classList.toggle('active', page==='thuchi');
   document.getElementById('hamTabAsset')   ?.classList.toggle('active', page==='asset');
+  // Sync bottom nav
+  document.getElementById('bnDebt')    ?.classList.toggle('active', page==='debt');
+  document.getElementById('bnCalendar')?.classList.toggle('active', page==='calendar');
+  document.getElementById('bnThuChi')  ?.classList.toggle('active', page==='thuchi');
+  document.getElementById('bnAsset')   ?.classList.toggle('active', page==='asset');
   if (page === 'calendar') calInit();
   if (page === 'thuchi') tcInit();
   if (page === 'asset') aaInit();
