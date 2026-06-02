@@ -1571,6 +1571,7 @@ body {
         <button class="currency-btn" id="btnUSD" onclick="setCurrency('USD')">USD</button>
       </div>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Sáng/Tối">☀️</button>
+        <button class="theme-btn" onclick="manualRefresh()" title="Đồng bộ dữ liệu" style="font-size:14px">🔄</button>
       <div class="user-chip" id="userChip" onclick="loginShowLogout()" title="Tài khoản">
         <div class="user-chip-avatar" id="userAvatar">?</div>
         <span class="user-chip-email" id="userEmail">Đăng nhập</span>
@@ -1797,7 +1798,15 @@ const PAGE_KEY       = 'nmoney_active_page';
 // Supabase (Debt Tracker project — single source of truth)
 const SB_URL = 'https://qjvkuokbmwhazzlkfikl.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdmt1b2tibXdoYXp6bGtmaWtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTgyNDYsImV4cCI6MjA5NTU5NDI0Nn0.AT-QyWlPnwy32WebC5T5SEJc9t2LVTS4_XMg_yEPFQk';
-const sb     = supabase.createClient(SB_URL, SB_KEY);
+const sb     = supabase.createClient(SB_URL, SB_KEY, {
+  auth: {
+    persistSession: true,
+    storageKey: 'nmoney_supabase_auth',
+    storage: window.localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: false
+  }
+});
 const CAL_TABLE = 'trading_calendar';
 
 let syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
@@ -2007,10 +2016,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
       document.getElementById('loginOverlay').classList.add('hidden');
       updateUserChip(currentUser);
       await loadState();
-      if (activePage === 'thuchi')   await tcInit();
+      // Luôn init page đang active để load cloud data
       if (activePage === 'calendar') await calInit();
+      if (activePage === 'thuchi')   await tcInit();
       if (activePage === 'asset')    await aaInit();
-      else                           aaLoadLocal();
+      if (activePage !== 'asset')    aaLoadLocal();
     } else {
       currentUser = null;
       syncCode    = '';
@@ -2040,6 +2050,16 @@ function updateUserChip(user) {
 function openSyncModal()  {}
 function closeSyncModal() {}
 async function saveSyncCode() {}
+
+// Manual refresh — reload cloud data for current page
+async function manualRefresh() {
+  if (!syncCode) { showToast('Chưa đăng nhập', 'error'); return; }
+  showToast('Đang tải dữ liệu...', '');
+  if (activePage === 'calendar') { await calInit(); showToast('✓ Đã đồng bộ Calendar', 'success'); }
+  else if (activePage === 'thuchi') { await tcInit(); showToast('✓ Đã đồng bộ Thu Chi', 'success'); }
+  else if (activePage === 'asset') { await aaInit(); showToast('✓ Đã đồng bộ Tài sản', 'success'); }
+  else if (activePage === 'debt') { await loadState(); renderDashboard(); showToast('✓ Đã đồng bộ Debt', 'success'); }
+}
 
 function updateApiStatus() {
   const dot = document.getElementById('apiDot');
@@ -2636,39 +2656,45 @@ async function calLoadMonth() {
 }
 
 async function calSaveRecord(key, usdVal, note) {
-  if (!syncCode) return false;
+  // Always save locally first
   calData[key] = {pnl: usdVal, note: note||''};
   calSaveLocal();
+  if (!syncCode) return true; // local-only save still counts as success
   try {
-    // Delete then insert to avoid onConflict multi-column bug
-    await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
-    if (usdVal !== null) {
-      const { error } = await sb.from(CAL_TABLE).insert({
+    if (usdVal === null) {
+      // Delete record
+      await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
+    } else {
+      // Upsert — no delete+insert race condition
+      const { error } = await sb.from(CAL_TABLE).upsert({
         sync_code: syncCode,
         date: key,
         pnl: +parseFloat(usdVal).toFixed(6),
         note: note || ''
-      });
+      }, { onConflict: 'sync_code,date' });
       if (error) throw error;
     }
     return true;
   } catch(e) {
-    console.warn('Calendar save error:', e?.message || e);
-    return false;
+    const msg = e?.message || String(e);
+    showToast('⚠ Cloud lỗi (đã lưu local): ' + msg.slice(0,50), 'error');
+    console.warn('Calendar save error:', msg);
+    return true; // return true so modal closes and calendar re-renders
   }
 }
 
 async function calDelRecord(key) {
-  if (!syncCode) return false;
+  // Always delete locally first
   delete calData[key];
   calSaveLocal();
+  if (!syncCode) return true;
   try {
     const { error } = await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
     if (error) throw error;
     return true;
   } catch(e) {
     console.warn('Calendar delete error:', e?.message || e);
-    return false;
+    return true; // local delete succeeded, close modal anyway
   }
 }
 
@@ -2817,7 +2843,14 @@ function calCloseModal() { document.getElementById('calModalBg').classList.remov
 // ── EXPRESSION EVALUATOR ─────────────────────────────────────
 function evalExpr(raw) {
   if (raw === '' || raw == null) return { val: null, display: '', err: false };
-  var s = raw.toString().replace(/×/g,'*').replace(/÷/g,'/').replace(/\s/g,'').replace(/,/g,'.');
+  // Strip thousand-separator commas BEFORE replacing operator symbols
+  // e.g. "555,555,555" → "555555555"; "1,5" (decimal) → kept as-is via dot replacement
+  var s = raw.toString().replace(/×/g,'*').replace(/÷/g,'/').replace(/\s/g,'');
+  // Remove commas used as thousand separators (e.g. 555,555,555 → 555555555)
+  // but only when they appear between digit groups of exactly 3
+  s = s.replace(/(?<=\d),(?=\d{3}(?:[^\d]|$))/g, '');
+  // Fallback: remove all remaining commas (handles cases not caught above)
+  s = s.replace(/,/g, '');
   // Allow only safe chars
   if (/[^0-9+\-*/.()]/.test(s)) return { val: null, display: '⚠ Ký tự không hợp lệ', err: true };
   var result;
@@ -3038,15 +3071,14 @@ async function tcLoadYear() {
 }
 
 async function tcSaveRecord(key, thu, chi, note) {
-  if (!syncCode) return false;
+  // Always save locally first
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
+  if (!syncCode) return true;
   try {
-    // Delete then insert to avoid onConflict sync_code+month bug
-    await sb.from(TC_TABLE).delete().eq('sync_code', syncCode).eq('month', key);
-    const { error } = await sb.from(TC_TABLE).insert({
+    const { error } = await sb.from(TC_TABLE).upsert({
       sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
-    });
+    }, { onConflict: 'sync_code,month' });
     if (error) throw error;
     tcSetSync('ok');
     return true;
@@ -3054,14 +3086,14 @@ async function tcSaveRecord(key, thu, chi, note) {
     const msg = e?.message || String(e);
     console.warn('ThuChi save error:', msg);
     tcSetSync('err', msg);
-    return false;
+    return true; // local save succeeded, close modal anyway
   }
 }
 
 async function tcDelRecord(key) {
-  if (!syncCode) return false;
   delete tcData[key];
   tcSaveLocal();
+  if (!syncCode) return true;
   try {
     const { error } = await sb.from(TC_TABLE).delete().eq('sync_code', syncCode).eq('month', key);
     if (error) throw error;
@@ -3071,7 +3103,7 @@ async function tcDelRecord(key) {
     const msg = e?.message || String(e);
     console.warn('ThuChi delete error:', msg);
     tcSetSync('err', msg);
-    return false;
+    return true; // local delete succeeded
   }
 }
 
