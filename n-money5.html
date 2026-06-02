@@ -1805,9 +1805,12 @@ async function loginSubmit() {
   const tab   = document.getElementById('loginTabSignin').classList.contains('active') ? 'signin' : 'signup';
   if (!email || !pass) { loginShowErr('Vui lòng nhập email và mật khẩu'); return; }
   const btn = document.getElementById('loginBtn');
+  const btnTxt = document.getElementById('loginBtnText');
   btn.disabled = true;
-  document.getElementById('loginBtnText').textContent = 'Đang xử lý...';
+  btnTxt.textContent = 'Đang xử lý...';
   loginClearErr();
+  // Reset _authHandling phòng trường hợp bị kẹt từ lần trước
+  _authHandling = false;
   try {
     let result;
     if (tab === 'signin') {
@@ -1817,20 +1820,34 @@ async function loginSubmit() {
     }
     if (result.error) throw result.error;
     if (tab === 'signup' && !result.data?.session) {
-      loginShowErr('Đăng ký thành công! Kiểm tra email để xác nhận tài khoản.');
+      loginShowErr('✓ Đăng ký thành công! Kiểm tra email để xác nhận tài khoản.');
       btn.disabled = false;
-      document.getElementById('loginBtnText').textContent = 'Đăng ký';
+      btnTxt.textContent = 'Đăng ký';
       return;
     }
-    // Session established — onAuthStateChange will handle the rest
+    // signIn thành công — xử lý trực tiếp không đợi onAuthStateChange
+    if (result.data?.session?.user) {
+      const user = result.data.session.user;
+      currentUser = user;
+      syncCode    = user.id;
+      document.getElementById('loginOverlay').classList.add('hidden');
+      updateUserChip(user);
+      await loadState();
+      if (activePage === 'thuchi')   await tcInit();
+      if (activePage === 'calendar') await calInit();
+      if (activePage === 'asset')    await aaInit();
+      else aaLoadLocal();
+    }
   } catch(e) {
     const msg = e.message || 'Đăng nhập thất bại';
-    if (msg.includes('Invalid login')) loginShowErr('Email hoặc mật khẩu không đúng');
-    else if (msg.includes('already registered')) loginShowErr('Email đã được đăng ký. Vui lòng đăng nhập.');
+    if (msg.includes('Invalid login') || msg.includes('invalid_credentials'))
+      loginShowErr('Email hoặc mật khẩu không đúng');
+    else if (msg.includes('already registered'))
+      loginShowErr('Email đã được đăng ký. Vui lòng đăng nhập.');
     else loginShowErr(msg);
+  } finally {
     btn.disabled = false;
-    document.getElementById('loginBtnText').textContent =
-      document.getElementById('loginTabSignin').classList.contains('active') ? 'Đăng nhập' : 'Đăng ký';
+    btnTxt.textContent = document.getElementById('loginTabSignin').classList.contains('active') ? 'Đăng nhập' : 'Đăng ký';
   }
 }
 
@@ -1878,39 +1895,36 @@ let _authHandling = false;
 
 // Supabase auth state listener — single source of truth
 sb.auth.onAuthStateChange(async (event, session) => {
-  // Ignore TOKEN_REFRESHED to prevent sync loop on refresh
-  if (event === 'TOKEN_REFRESHED') { return; }
+  // Ignore TOKEN_REFRESHED và USER_UPDATED để tránh sync loop
+  if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
+  // Nếu loginSubmit đã xử lý session này rồi, bỏ qua
+  if (event === 'SIGNED_IN' && currentUser && session?.user?.id === currentUser.id) return;
   if (_authHandling) return;
   _authHandling = true;
   try {
     if (session?.user) {
       currentUser = session.user;
       const userId = currentUser.id;
-
-      // ── Migration: nếu có sync_code cũ → UPDATE toàn bộ sang user.id ──
+      // Migration sync_code cũ
       const oldCode = localStorage.getItem(SYNC_CODE_KEY);
       if (oldCode && oldCode !== userId) {
         try {
           const tables = ['debt_cards', 'trading_calendar', 'asset_allocation', 'thu_chi'];
           await Promise.all(tables.map(t =>
-            sb.from(t).update({ sync_code: userId }).eq('sync_code', oldCode).then(r => {
-              if (r.error) console.warn(`Migration ${t}:`, r.error.message);
-            })
+            sb.from(t).update({ sync_code: userId }).eq('sync_code', oldCode)
           ));
           localStorage.removeItem(SYNC_CODE_KEY);
           showToast('✓ Đã chuyển dữ liệu sang tài khoản mới', 'success');
         } catch(e) { console.warn('Migration error:', e); }
       }
-
       syncCode = userId;
       document.getElementById('loginOverlay').classList.add('hidden');
       updateUserChip(currentUser);
-      // Load all data with new user id
       await loadState();
       if (activePage === 'thuchi')   await tcInit();
       if (activePage === 'calendar') await calInit();
       if (activePage === 'asset')    await aaInit();
-      else aaLoadLocal();  // preload AA local even if not on tab
+      else aaLoadLocal();
     } else {
       currentUser = null;
       syncCode    = '';
