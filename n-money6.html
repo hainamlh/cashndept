@@ -2764,20 +2764,20 @@ async function calSaveRecord(key, usdVal, note) {
     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + ms + 'ms')), ms))
   ]);
   try {
-    if (usdVal === null) {
-      await withTimeout(
-        sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key),
-        8000
-      );
-    } else {
+    // Delete first, then insert (upsert causes timeout with anon key)
+    await withTimeout(
+      sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key),
+      5000
+    );
+    if (usdVal !== null) {
       const { error } = await withTimeout(
-        sb.from(CAL_TABLE).upsert({
+        sb.from(CAL_TABLE).insert({
           sync_code: syncCode,
           date: key,
           pnl: +parseFloat(usdVal).toFixed(6),
           note: note || ''
-        }, { onConflict: 'sync_code,date' }),
-        8000
+        }),
+        5000
       );
       if (error) throw error;
     }
@@ -3182,11 +3182,15 @@ async function tcSaveRecord(key, thu, chi, note) {
     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + ms + 'ms')), ms))
   ]);
   try {
+    await withTimeout(
+      sb.from(TC_TABLE).delete().eq('sync_code', syncCode).eq('month', key),
+      5000
+    );
     const { error } = await withTimeout(
-      sb.from(TC_TABLE).upsert({
+      sb.from(TC_TABLE).insert({
         sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
-      }, { onConflict: 'sync_code,month' }),
-      8000
+      }),
+      5000
     );
     if (error) throw error;
     tcSetSync('ok');
@@ -3660,14 +3664,10 @@ async function aaSaveSupabase() {
       value: aaState[a.key].value || 0,
       transactions: aaState[a.key].transactions || []
     }));
-    const { error: upsertErr } = await sb.from(AA_TABLE)
-      .upsert(rows, { onConflict: 'sync_code,asset_key' });
-    if (upsertErr) {
-      // Fallback: delete this user's rows then re-insert
-      await sb.from(AA_TABLE).delete().eq('sync_code', syncCode);
-      const { error: insErr } = await sb.from(AA_TABLE).insert(rows);
-      if (insErr) throw insErr;
-    }
+    // delete+insert (upsert causes timeout with anon key)
+    await sb.from(AA_TABLE).delete().eq('sync_code', syncCode);
+    const { error: insErr } = await sb.from(AA_TABLE).insert(rows);
+    if (insErr) throw insErr;
     aaSetSync('ok');
   } catch(e) {
     console.warn('AA Supabase save error:', e);
