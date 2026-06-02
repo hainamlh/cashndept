@@ -1259,13 +1259,14 @@ body {
 .ham-overlay.open { display: block; }
 
 @media (max-width: 768px) {
-  /* Row 1: brand + controls */
+  /* Row 1: brand + controls (VND/USD, theme, sync, avatar) */
   /* Row 2: page tabs full width */
   .topbar {
     flex-wrap: wrap;
     height: auto;
     padding: 6px 10px 0;
     gap: 0;
+    align-items: center;
   }
   .topbar-left {
     order: 1;
@@ -1273,7 +1274,7 @@ body {
     padding-bottom: 6px;
   }
   .topbar-right {
-    order: 2;
+    order: 1;
     flex: 1;
     justify-content: flex-end;
     padding-bottom: 6px;
@@ -1281,16 +1282,15 @@ body {
   /* Tabs on row 2, full width */
   .page-tabs {
     display: flex !important;
-    order: 3;
-    width: 100%;
+    order: 2;
+    width: calc(100% + 20px);
+    margin: 0 -10px;
     border-radius: 0;
     border: none;
     border-top: 1px solid var(--border);
     background: var(--bg-1);
     padding: 5px 8px;
     gap: 4px;
-    margin: 0 -10px;
-    width: calc(100% + 20px);
   }
   .page-tab {
     flex: 1;
@@ -1301,7 +1301,6 @@ body {
   }
   /* Hide hamburger */
   .ham-btn { display: none; }
-  /* No bottom padding needed */
   .page-shell { padding-bottom: 0; }
 }
 
