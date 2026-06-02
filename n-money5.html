@@ -408,7 +408,86 @@ body {
 .progress-bar-bg { height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
 
-/* ── Empty State ── */
+/* ── Debt Cards — Compact Grid (AA style) ── */
+.debt-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+}
+.debt-mini-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 12px 12px;
+  cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow-card); position: relative; overflow: hidden;
+}
+.debt-mini-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 10px 10px 0 0;
+}
+.debt-mini-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+.debt-mini-card.selected { box-shadow: 0 0 0 1.5px var(--gold); border-color: var(--gold); }
+.debt-mini-card.selected::before { opacity: 1; }
+
+.debt-mini-header {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+}
+.debt-mini-avatar {
+  width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 8px;
+}
+.debt-mini-name {
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
+  color: var(--text-secondary); letter-spacing: 0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.debt-mini-tag {
+  font-size: 9px; padding: 1px 5px; border-radius: 20px;
+  background: var(--bg-3); color: var(--text-muted); font-weight: 600;
+  white-space: nowrap; flex-shrink: 0;
+}
+.debt-mini-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 4px; gap: 4px;
+}
+.debt-mini-row:last-child { margin-bottom: 0; }
+.debt-mini-lbl {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted);
+  font-family: 'Plus Jakarta Sans', sans-serif; flex-shrink: 0;
+}
+.debt-mini-val {
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 800;
+  white-space: nowrap; letter-spacing: -0.01em;
+}
+.debt-mini-sub { font-size: 10px; color: var(--text-muted); }
+.debt-mini-pct { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700; color: var(--text-secondary); }
+.debt-mini-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 20px; margin-top: 5px;
+}
+
+/* Debt accordion */
+.debt-accordion {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 10px;
+}
+.debt-accordion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--border);
+}
+.debt-accordion-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-primary);
+}
+.debt-accordion-arrow { font-size: 11px; color: var(--text-muted); transition: transform 0.2s; }
+.debt-accordion.open .debt-accordion-arrow { transform: rotate(180deg); }
+.debt-accordion-body { padding: 10px 12px 12px; }
+
+@media (max-width: 480px) {
+  .debt-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .debt-mini-card { padding: 9px 10px 10px; }
+  .debt-mini-val { font-size: 13px; }
+}
 .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
 .empty-icon { font-size: 48px; margin-bottom: 1rem; opacity: 0.4; }
 .empty-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; color: var(--text-secondary); margin-bottom: 8px; }
@@ -865,10 +944,12 @@ body {
     justify-content: space-between;
   }
   .topbar-right {
-    flex: 1 1 100%;
-    gap: 6px;
+    flex: none;
+    gap: 5px;
     justify-content: flex-end;
   }
+  .user-chip-email { display: none; }
+  .user-chip { padding: 3px 6px; gap: 4px; }
   .brand-logo { width: 26px; height: 26px; font-size: 13px; border-radius: 7px; }
   .brand-name { font-size: 12px; }
   .page-tabs { gap: 2px; }
@@ -1453,8 +1534,8 @@ body {
 <!-- Mobile Nav Dropdown -->
 <div class="ham-overlay" id="hamOverlay" onclick="hamClose()"></div>
 <div class="ham-dropdown" id="hamDropdown">
-  <button class="ham-tab-item active" id="hamTabDebt"     onclick="hamNav('debt')">💳 Debt Tracker</button>
-  <button class="ham-tab-item"        id="hamTabCalendar" onclick="hamNav('calendar')">📅 Trading Calendar</button>
+  <button class="ham-tab-item active" id="hamTabDebt"     onclick="hamNav('debt')">💳 Debt</button>
+  <button class="ham-tab-item"        id="hamTabCalendar" onclick="hamNav('calendar')">📅 Trading</button>
   <button class="ham-tab-item"        id="hamTabThuChi"   onclick="hamNav('thuchi')">📊 Thu Chi</button>
   <button class="ham-tab-item"        id="hamTabAsset"    onclick="hamNav('asset')">🏦 Phân bổ tài sản</button>
 </div>
@@ -1476,24 +1557,21 @@ body {
       <button class="ham-btn" id="hamBtn" onclick="hamToggle()" title="Menu">☰</button>
       <!-- Page Tabs (desktop) -->
       <div class="page-tabs">
-        <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt Tracker</button>
-        <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading Calendar</button>
+        <button class="page-tab active" id="tabDebt" onclick="switchPage('debt')">💳 Debt</button>
+        <button class="page-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 Trading</button>
         <button class="page-tab" id="tabThuChi" onclick="switchPage('thuchi')">📊 Thu Chi</button>
-        <button class="page-tab" id="tabAsset" onclick="switchPage('asset')">🏦 Phân bổ</button>
+        <button class="page-tab" id="tabAsset" onclick="switchPage('asset')">🏦 Phân bổ tài sản</button>
       </div>
     </div>
     <div class="topbar-right">
-      <!-- Currency Toggle (shared) -->
       <div class="currency-toggle" title="Chọn đơn vị tiền tệ">
         <button class="currency-btn active" id="btnVND" onclick="setCurrency('VND')">VNĐ</button>
         <button class="currency-btn" id="btnUSD" onclick="setCurrency('USD')">USD</button>
       </div>
-      <!-- Theme -->
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Sáng/Tối">☀️</button>
-      <!-- User chip (replaces sync button) -->
       <div class="user-chip" id="userChip" onclick="loginShowLogout()" title="Tài khoản">
         <div class="user-chip-avatar" id="userAvatar">?</div>
-        <span class="user-chip-email" id="userEmail">Chưa đăng nhập</span>
+        <span class="user-chip-email" id="userEmail">Đăng nhập</span>
         <div class="dot" id="syncDot"></div>
       </div>
     </div>
@@ -1520,11 +1598,11 @@ body {
           <div class="section-label">Ảnh đã chọn (<span id="thumbCount">0</span>)</div>
           <div class="thumb-strip" id="thumbStrip"></div>
         </div>
-        <div style="display:flex;gap:6px;align-items:stretch">
-          <button class="btn-primary" id="analyzeBtn" onclick="analyzeAll()" disabled style="flex:1">
+        <div style="display:flex;gap:6px;align-items:stretch;flex-direction:column">
+          <button class="btn-primary" id="analyzeBtn" onclick="analyzeAll()" disabled>
             <span>✨ Phân tích bằng AI</span>
           </button>
-          <div class="api-status" id="apiStatusBtn" onclick="openApiModal()" style="flex-shrink:0;border-radius:12px;padding:0 12px" title="API Key">
+          <div class="api-status" id="apiStatusBtn" onclick="openApiModal()" style="border-radius:12px;padding:0 12px;justify-content:center" title="API Key">
             <div class="dot" id="apiDot"></div>
             <span id="apiStatusText">API</span>
           </div>
@@ -1537,16 +1615,16 @@ body {
             <span id="manualToggleArrow" style="font-size:11px;transition:transform 0.2s">▼</span>
           </button>
           <div class="manual-form" id="manualForm" style="display:none;margin-top:8px">
-            <input class="mini-input" id="mBank" placeholder="Ngân hàng (vd: Techcombank)">
+            <input class="mini-input" id="mBank" placeholder="Ngân hàng">
             <div class="mini-input-row">
-              <input class="mini-input" id="mAmount" placeholder="Dư nợ (VNĐ)">
+              <input class="mini-input" id="mAmount" placeholder="Dư nợ" inputmode="text" oninput="fmtInputComma(this)">
               <input class="mini-input" id="mDue" placeholder="Hạn DD/MM">
             </div>
             <div class="mini-input-row">
-              <input class="mini-input" id="mType" placeholder="Loại (Visa/MC...)">
-              <input class="mini-input" id="mMin" placeholder="Tối thiểu">
+              <input class="mini-input" id="mType" placeholder="Loại thẻ">
+              <input class="mini-input" id="mMin" placeholder="Tối thiểu" inputmode="text" oninput="fmtInputComma(this)">
             </div>
-            <input class="mini-input" id="mNote" placeholder="Ghi chú (tuỳ chọn)">
+            <input class="mini-input" id="mNote" placeholder="Ghi chú">
             <button class="btn-primary" onclick="addManual()" style="margin-top:2px"><span>＋ Thêm thẻ</span></button>
           </div>
         </div>
@@ -1679,18 +1757,17 @@ body {
       <div class="cal-nav-group" style="flex:none">
         <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;color:var(--text-primary)">Phân bổ tài sản</span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-left:auto">
         <div style="text-align:right">
           <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif">Tổng tài sản</div>
           <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--gold);letter-spacing:-0.02em;line-height:1.1" id="aaTotalVal">—</div>
           <div style="font-size:10px;color:var(--text-muted)" id="aaTotalSub"></div>
         </div>
-        <div class="dot" id="aaSyncDot"></div>
+        <div class="dot" id="aaSyncDot" style="margin-top:2px;flex-shrink:0"></div>
       </div>
     </div>
 
     <div class="aa-wrap">
-      <div class="aa-section-label">Danh mục tài sản</div>
       <!-- 6 cards: hàng 1 (3 cards) + hàng 2 (3 cards) -->
       <div id="aaGrid"></div>
       <!-- Accordion -->
@@ -1878,14 +1955,15 @@ function loginShowLogout() {
   document.body.appendChild(modal);
   // querySelector on modal element — không dùng getElementById vì có thể trùng
   modal.querySelector('._logoutCancel').addEventListener('click', () => modal.remove());
-  modal.querySelector('._logoutOk').addEventListener('click', () => {
+  modal.querySelector('._logoutOk').addEventListener('click', async () => {
     modal.remove();
-    sb.auth.signOut().catch(() => {}).finally(() => {
-      currentUser = null; syncCode = '';
-      Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
-      updateUserChip(null);
-      document.getElementById('loginOverlay').classList.remove('hidden');
-    });
+    // Reset state ngay lập tức, không đợi signOut callback
+    currentUser = null; syncCode = ''; _authHandling = false;
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+    updateUserChip(null);
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    // signOut async - không block UI
+    try { await sb.auth.signOut(); } catch(e) {}
   });
 }
 
@@ -1897,8 +1975,12 @@ let _authHandling = false;
 sb.auth.onAuthStateChange(async (event, session) => {
   // Ignore TOKEN_REFRESHED và USER_UPDATED để tránh sync loop
   if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
-  // Nếu loginSubmit đã xử lý session này rồi, bỏ qua
+  // Nếu loginSubmit đã xử lý SIGNED_IN này rồi, bỏ qua (tránh double-load)
   if (event === 'SIGNED_IN' && currentUser && session?.user?.id === currentUser.id) return;
+  // INITIAL_SESSION sau reload — reset flag nếu kẹt
+  if (event === 'INITIAL_SESSION') _authHandling = false;
+  // SIGNED_OUT — luôn xử lý, không bị block
+  if (event === 'SIGNED_OUT') _authHandling = false;
   if (_authHandling) return;
   _authHandling = true;
   try {
@@ -2363,6 +2445,8 @@ function clearAllCards() {
 // ══════════════════════════════════════════════════════════════
 // RENDER DASHBOARD
 // ══════════════════════════════════════════════════════════════
+let _debtSelIdx = null; // accordion state
+
 function renderDashboard() {
   const cards=state.cards, total=cards.reduce((s,c)=>s+(c.amount||0),0), n=cards.length;
   const totalEl=document.getElementById('totalAmount'), totalSub=document.getElementById('totalSub');
@@ -2379,62 +2463,90 @@ function renderDashboard() {
     else if(minDays<=7){urgentCard.className='metric-card';urgentVal.style.color='var(--amber)';}
     else{urgentCard.className='metric-card ok';urgentVal.style.color='var(--green)';}
   } else { urgentVal.textContent='—'; urgentSub.textContent='Không có'; urgentCard.className='metric-card ok'; urgentVal.style.color=''; }
+
   const emptyState=document.getElementById('emptyState'), cardsList=document.getElementById('cardsList'), progressWrap=document.getElementById('progressWrap');
   if (!n) { emptyState.classList.remove('hidden'); cardsList.classList.add('hidden'); progressWrap.classList.add('hidden'); return; }
   emptyState.classList.add('hidden'); cardsList.classList.remove('hidden');
+
   const sorted=[...cards].map((c,origIdx)=>({...c,_origIdx:origIdx})).sort((a,b)=>(b.amount||0)-(a.amount||0));
-  cardsList.innerHTML = sorted.map(c => {
-    const i=c._origIdx, s=c._style||getBankStyle(c.bank||'??'), days=daysUntil(c.dueDate), logoUrl=bankLogoUrl(s.domain);
+
+  // Compact grid
+  const gridHtml = `<div class="debt-grid">${sorted.map(c => {
+    const i=c._origIdx, s=c._style||getBankStyle(c.bank||'??');
     const pct=total?Math.round((c.amount/total)*100):0;
-    const amtMain=fmtM(c.amount), amtAlt=currency==='USD'?fmtVND_M(c.amount):fmtUSD_K(c.amount);
-    let dueBadge='';
-    if (c.dueDate) {
-      if(days!==null) {
-        if(days<=3) dueBadge=`<span class="badge badge-urgent">⚡ Hạn ${c.dueDate} · ${days} ngày</span>`;
-        else if(days<=7) dueBadge=`<span class="badge badge-warn">⏰ Hạn ${c.dueDate} · ${days} ngày</span>`;
-        else dueBadge=`<span class="badge badge-ok">📅 Hạn ${c.dueDate} · ${days} ngày</span>`;
-      } else dueBadge=`<span class="badge badge-ok">📅 Hạn ${c.dueDate}</span>`;
+    const amtMain=fmtM(c.amount), amtAlt=currency==='VND'?fmtUSD_K(c.amount):fmtVND_M(c.amount);
+    const days=daysUntil(c.dueDate);
+    const isSel = _debtSelIdx === i;
+    let badgeHtml='';
+    if (c.dueDate && days!==null) {
+      if(days<=3) badgeHtml=`<div class="debt-mini-badge badge-urgent">⚡ ${days} ngày</div>`;
+      else if(days<=7) badgeHtml=`<div class="debt-mini-badge badge-warn">⏰ ${days} ngày</div>`;
+      else badgeHtml=`<div class="debt-mini-badge badge-ok">📅 ${days} ngày</div>`;
     }
-    const txs=c.transactions||[];
-    const txHtml=txs.length?`<div class="tx-list">${txs.map((tx,ti)=>`<div class="tx-item"><span class="tx-date">${tx.date}</span><span class="tx-amt ${tx.amount>=0?'pos':'neg'}">${tx.amount>=0?'+':''}${fmtVND_M(tx.amount)}</span><span class="tx-note">${tx.note||'—'}</span><button class="tx-del" onclick="deleteTx(${i},${ti})" title="Xóa">✕</button></div>`).join('')}</div>`:'';
+    const logoUrl=bankLogoUrl(s.domain);
     return `
-    <div class="card-item" style="animation-delay:${sorted.indexOf(c)*0.05}s">
-      <div class="card-item-row">
-        <div class="card-left">
-          <div class="card-bank-row">
-            <div class="bank-avatar" style="background:${s.bg};color:${s.fg}">
-              ${logoUrl?`<img class="bank-logo-img" src="${logoUrl}" alt="${s.text}" onerror="this.classList.add('hidden');this.nextElementSibling.style.display='flex'" onload="this.nextElementSibling.style.display='none'"><span style="display:none">${s.text}</span>`:s.text}
-            </div>
-            <div><div class="card-bank">${c.bank}</div>${c.cardType?`<span class="card-type-tag">${c.cardType}</span>`:''}</div>
-          </div>
-          ${dueBadge?`<div class="card-badges" style="margin-top:6px">${dueBadge}</div>`:''}
-          ${c.note?`<div class="card-note" style="margin-top:6px">${c.note}</div>`:''}
-          <div class="progress-wrap" style="margin-top:10px">
-            <div class="progress-label"><span style="font-size:13px">Tỉ trọng</span><span style="font-size:13px">${pct}%</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${s.fg},${s.fg}88)"></div></div>
-          </div>
-          <div class="card-actions" style="margin-top:10px">
-            <button class="btn-ghost" onclick="openEditModal(${i})">✏️ Sửa</button>
-            <button class="btn-ghost danger" onclick="removeCard(${i})">🗑 Xóa</button>
-          </div>
+    <div class="debt-mini-card${isSel?' selected':''}" onclick="debtSelectCard(${i})"
+      style="--card-color:${s.fg}">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${s.fg};opacity:0.8;border-radius:10px 10px 0 0"></div>
+      <div class="debt-mini-header">
+        <div class="debt-mini-avatar" style="background:${s.bg};color:${s.fg}">
+          ${logoUrl?`<img src="${logoUrl}" alt="${s.text}" style="width:18px;height:18px;border-radius:3px;object-fit:contain" onerror="this.style.display='none'">`:s.text}
         </div>
-        <div class="card-right">
-          <div class="card-amount" style="color:${s.fg}">${amtMain}</div>
-          <div class="card-amount-sub">${amtAlt}</div>
-        </div>
+        <span class="debt-mini-name">${c.bank}</span>
+        ${c.cardType?`<span class="debt-mini-tag">${c.cardType}</span>`:''}
       </div>
-      <div class="adjust-section" style="margin-top:6px">
-        <div class="adjust-title">± Điều chỉnh dư nợ</div>
-        <div class="adjust-row1">
-          <button class="adj-date-btn" id="adj-date-btn-${i}" title="Chọn ngày" onclick="cdpOpen(${i})">📅</button>
-          <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="text" placeholder="${currency==='USD'?'+/- Số tiền (USD)':'+/- Số tiền (VNĐ)'}" oninput="fmtInputComma(this)">
-          <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
-          <button class="btn-adjust adj-btn" onclick="applyAdjust(${i})">Lưu</button>
-        </div>
-        ${txHtml}
+      <div class="debt-mini-row">
+        <span class="debt-mini-lbl">Dư nợ</span>
+        <span class="debt-mini-val" style="color:${s.fg}">${amtMain}</span>
+      </div>
+      <div class="debt-mini-row" style="margin-top:2px">
+        <span class="debt-mini-sub">${amtAlt}</span>
+        ${badgeHtml}
       </div>
     </div>`;
-  }).join('');
+  }).join('')}</div>`;
+
+  // Accordion
+  let accordionHtml = '';
+  if (_debtSelIdx !== null) {
+    const c = cards[_debtSelIdx];
+    if (c) {
+      const i = _debtSelIdx;
+      const s = c._style||getBankStyle(c.bank||'??');
+      const txs = c.transactions||[];
+      const txHtml = txs.length ? `<div class="tx-list" style="margin-top:8px">${
+        txs.map((tx,ti)=>`<div class="tx-item"><span class="tx-date">${tx.date}</span><span class="tx-amt ${tx.amount>=0?'pos':'neg'}">${tx.amount>=0?'+':''}${fmtVND_M(tx.amount)}</span><span class="tx-note">${tx.note||'—'}</span><button class="tx-del" onclick="deleteTx(${i},${ti})" title="Xóa">✕</button></div>`).join('')
+      }</div>` : '<div style="font-size:11px;color:var(--text-muted);padding:4px 0">Chưa có giao dịch</div>';
+      accordionHtml = `
+      <div class="debt-accordion open">
+        <div class="debt-accordion-header" onclick="debtSelectCard(${i})">
+          <div class="debt-accordion-title">
+            <div class="debt-mini-avatar" style="background:${s.bg};color:${s.fg};width:20px;height:20px;font-size:7px">${s.text}</div>
+            <span>${c.bank}${c.cardType?' · '+c.cardType:''}</span>
+            <span style="color:${s.fg};font-size:13px;font-weight:800">${fmtM(c.amount)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn-ghost" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();openEditModal(${i})">✏️ Sửa</button>
+            <button class="btn-ghost danger" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();removeCard(${i})">🗑</button>
+            <span class="debt-accordion-arrow">▼</span>
+          </div>
+        </div>
+        <div class="debt-accordion-body">
+          <div class="adjust-row1" style="margin-bottom:8px">
+            <button class="adj-date-btn" id="adj-date-btn-${i}" title="Chọn ngày" onclick="cdpOpen(${i})">📅</button>
+            <input class="adjust-input adj-amt" id="adj-amt-${i}" type="text" inputmode="text"
+              placeholder="${currency==='USD'?'+/- USD':'+/- VNĐ'}" oninput="fmtInputComma(this)">
+            <input class="adjust-input adj-note" id="adj-note-${i}" placeholder="Lý do: trả nợ, chi tiêu…">
+            <button class="btn-adjust adj-btn" onclick="applyAdjust(${i})">Lưu</button>
+          </div>
+          ${txHtml}
+        </div>
+      </div>`;
+    }
+  }
+
+  cardsList.innerHTML = gridHtml + accordionHtml;
+
   if (n>=2) {
     progressWrap.classList.remove('hidden');
     document.getElementById('progressBars').innerHTML = cards.map(c => {
@@ -2442,6 +2554,16 @@ function renderDashboard() {
       return `<div><div class="progress-label"><span style="font-size:12px">${c.bank}</span><span style="font-size:12px">${fmtM(c.amount)} · ${pct}%</span></div><div class="progress-bar-bg" style="height:6px"><div class="progress-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${s.fg},${s.fg}88)"></div></div></div>`;
     }).join('');
   } else progressWrap.classList.add('hidden');
+}
+
+function debtSelectCard(i) {
+  _debtSelIdx = _debtSelIdx === i ? null : i;
+  renderDashboard();
+  if (_debtSelIdx !== null) {
+    setTimeout(() => {
+      document.querySelector('.debt-accordion')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 60);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3429,9 +3551,17 @@ function aaFmtVal(vnd) {
 }
 function aaFmtSub(vnd) {
   if (!vnd) return '';
-  if (currency === 'USD') return vnd >= 1e6 ? (vnd/1e6).toFixed(1)+'trđ' : Math.round(vnd/1e6*10)/10+'trđ';
-  const u = vnd/usdRate;
-  return '$' + (u >= 1000 ? (u/1000).toFixed(1)+'k' : u.toFixed(0));
+  if (currency === 'USD') {
+    // Main đang hiện USD → sub hiện VNĐ
+    if (vnd >= 1e9) return (vnd/1e9).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
+    if (vnd >= 1e6) return (vnd/1e6).toFixed(1).replace(/\.?0+$/,'') + ' trđ';
+    return vnd.toLocaleString('vi-VN') + 'đ';
+  }
+  // Main đang hiện VNĐ → sub hiện USD
+  const u = vnd / usdRate;
+  if (u >= 1e6) return '$' + (u/1e6).toFixed(2) + 'M';
+  if (u >= 1000) return '$' + (u/1000).toFixed(1) + 'k';
+  return '$' + u.toFixed(0);
 }
 
 // ── Compute total & pct ──
@@ -3749,29 +3879,8 @@ attachCommaInputs();
 document.getElementById('loginPassword').addEventListener('keydown', e => { if(e.key==='Enter') loginSubmit(); });
 document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') loginSubmit(); });
 
-// Auth listener will call loadState + switchPage once session is confirmed
+// Auth listener xử lý INITIAL_SESSION khi reload, SIGNED_IN khi login mới
 switchPage(activePage);
-
-// Restore session từ localStorage nếu đã đăng nhập trước đó (thiết bị 2)
-sb.auth.getSession().then(({ data: { session } }) => {
-  if (session?.user && !currentUser) {
-    // onAuthStateChange sẽ tự fire với INITIAL_SESSION — không cần làm gì thêm
-    // Nhưng nếu không fire (một số browser), xử lý trực tiếp:
-    if (!_authHandling) {
-      _authHandling = true;
-      currentUser = session.user;
-      syncCode    = session.user.id;
-      document.getElementById('loginOverlay').classList.add('hidden');
-      updateUserChip(currentUser);
-      loadState().then(() => {
-        if (activePage === 'thuchi')   tcInit();
-        if (activePage === 'calendar') calInit();
-        if (activePage === 'asset')    aaInit();
-        else aaLoadLocal();
-      }).finally(() => { _authHandling = false; });
-    }
-  }
-});
 </script>
 </body>
 </html>
