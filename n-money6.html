@@ -2757,27 +2757,36 @@ async function calSaveRecord(key, usdVal, note) {
   // Always save locally first
   calData[key] = {pnl: usdVal, note: note||''};
   calSaveLocal();
-  if (!syncCode) return true; // local-only save still counts as success
+  if (!syncCode) return true;
+  // Race: 8s timeout vs actual request
+  const withTimeout = (promise, ms) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + ms + 'ms')), ms))
+  ]);
   try {
     if (usdVal === null) {
-      // Delete record
-      await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
+      await withTimeout(
+        sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key),
+        8000
+      );
     } else {
-      // Upsert — no delete+insert race condition
-      const { error } = await sb.from(CAL_TABLE).upsert({
-        sync_code: syncCode,
-        date: key,
-        pnl: +parseFloat(usdVal).toFixed(6),
-        note: note || ''
-      }, { onConflict: 'sync_code,date' });
+      const { error } = await withTimeout(
+        sb.from(CAL_TABLE).upsert({
+          sync_code: syncCode,
+          date: key,
+          pnl: +parseFloat(usdVal).toFixed(6),
+          note: note || ''
+        }, { onConflict: 'sync_code,date' }),
+        8000
+      );
       if (error) throw error;
     }
     return true;
   } catch(e) {
     const msg = e?.message || String(e);
-    showToast('⚠ Cloud lỗi (đã lưu local): ' + msg.slice(0,50), 'error');
+    showToast('⚠ ' + msg.slice(0, 60), 'error');
     console.warn('Calendar save error:', msg);
-    return true; // return true so modal closes and calendar re-renders
+    return true; // local saved — close modal anyway
   }
 }
 
@@ -3165,22 +3174,29 @@ async function tcLoadYear() {
 }
 
 async function tcSaveRecord(key, thu, chi, note) {
-  // Always save locally first
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
   if (!syncCode) return true;
+  const withTimeout = (promise, ms) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ' + ms + 'ms')), ms))
+  ]);
   try {
-    const { error } = await sb.from(TC_TABLE).upsert({
-      sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
-    }, { onConflict: 'sync_code,month' });
+    const { error } = await withTimeout(
+      sb.from(TC_TABLE).upsert({
+        sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
+      }, { onConflict: 'sync_code,month' }),
+      8000
+    );
     if (error) throw error;
     tcSetSync('ok');
     return true;
   } catch(e) {
     const msg = e?.message || String(e);
+    showToast('⚠ ' + msg.slice(0, 60), 'error');
     console.warn('ThuChi save error:', msg);
     tcSetSync('err', msg);
-    return true; // local save succeeded, close modal anyway
+    return true;
   }
 }
 
