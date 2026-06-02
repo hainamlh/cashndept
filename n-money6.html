@@ -1935,6 +1935,8 @@ function switchPage(page) {
   document.getElementById('bnCalendar')?.classList.toggle('active', page==='calendar');
   document.getElementById('bnThuChi')  ?.classList.toggle('active', page==='thuchi');
   document.getElementById('bnAsset')   ?.classList.toggle('active', page==='asset');
+  // Restore syncCode from localStorage in case Supabase JS auth hasn't fired yet
+  if (!syncCode) syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
   if (page === 'calendar') calInit();
   if (page === 'thuchi') tcInit();
   if (page === 'asset') aaInit();
@@ -2019,6 +2021,7 @@ async function loginSubmit() {
       const user = result.data.session.user;
       currentUser = user;
       syncCode    = user.id;
+      localStorage.setItem(SYNC_CODE_KEY, user.id); // persist for mobile reload
       _authHandling = true; // prevent onAuthStateChange double-load
       document.getElementById('loginOverlay').classList.add('hidden');
       updateUserChip(user);
@@ -2073,6 +2076,7 @@ function loginShowLogout() {
     modal.remove();
     // Reset state ngay lập tức, không đợi signOut callback
     currentUser = null; syncCode = ''; _authHandling = false;
+    localStorage.removeItem(SYNC_CODE_KEY);
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
     updateUserChip(null);
     document.getElementById('loginOverlay').classList.remove('hidden');
@@ -2114,6 +2118,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
         } catch(e) { console.warn('Migration error:', e); }
       }
       syncCode = userId;
+      localStorage.setItem(SYNC_CODE_KEY, userId); // persist for mobile reload
       document.getElementById('loginOverlay').classList.add('hidden');
       updateUserChip(currentUser);
       await loadState();
@@ -2154,6 +2159,8 @@ async function saveSyncCode() {}
 
 // Manual refresh — reload cloud data for current page
 async function manualRefresh() {
+  // Try to restore syncCode from localStorage if not set yet
+  if (!syncCode) syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
   if (!syncCode) { showToast('Chưa đăng nhập', 'error'); return; }
   showToast('Đang tải dữ liệu...', '');
   if (activePage === 'calendar') { await calInit(); showToast('✓ Đã đồng bộ Calendar', 'success'); }
