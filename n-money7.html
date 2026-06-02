@@ -1899,8 +1899,6 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const sb     = supabase.createClient(SB_URL, SB_KEY, {
   auth: {
     persistSession: true,
-    storageKey: 'nmoney_supabase_auth',
-    storage: window.localStorage,
     autoRefreshToken: true,
     detectSessionInUrl: false
   }
@@ -1937,6 +1935,8 @@ function switchPage(page) {
   document.getElementById('bnCalendar')?.classList.toggle('active', page==='calendar');
   document.getElementById('bnThuChi')  ?.classList.toggle('active', page==='thuchi');
   document.getElementById('bnAsset')   ?.classList.toggle('active', page==='asset');
+  // Restore syncCode from localStorage in case Supabase JS auth hasn't fired yet
+  if (!syncCode) syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
   if (page === 'calendar') calInit();
   if (page === 'thuchi') tcInit();
   if (page === 'asset') aaInit();
@@ -2021,6 +2021,7 @@ async function loginSubmit() {
       const user = result.data.session.user;
       currentUser = user;
       syncCode    = user.id;
+      localStorage.setItem(SYNC_CODE_KEY, user.id); // persist for mobile reload
       _authHandling = true; // prevent onAuthStateChange double-load
       document.getElementById('loginOverlay').classList.add('hidden');
       updateUserChip(user);
@@ -2075,6 +2076,7 @@ function loginShowLogout() {
     modal.remove();
     // Reset state ngay lập tức, không đợi signOut callback
     currentUser = null; syncCode = ''; _authHandling = false;
+    localStorage.removeItem(SYNC_CODE_KEY);
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
     updateUserChip(null);
     document.getElementById('loginOverlay').classList.remove('hidden');
@@ -2116,6 +2118,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
         } catch(e) { console.warn('Migration error:', e); }
       }
       syncCode = userId;
+      localStorage.setItem(SYNC_CODE_KEY, userId); // persist for mobile reload
       document.getElementById('loginOverlay').classList.add('hidden');
       updateUserChip(currentUser);
       await loadState();
@@ -2156,6 +2159,8 @@ async function saveSyncCode() {}
 
 // Manual refresh — reload cloud data for current page
 async function manualRefresh() {
+  // Try to restore syncCode from localStorage if not set yet
+  if (!syncCode) syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
   if (!syncCode) { showToast('Chưa đăng nhập', 'error'); return; }
   showToast('Đang tải dữ liệu...', '');
   if (activePage === 'calendar') { await calInit(); showToast('✓ Đã đồng bộ Calendar', 'success'); }
@@ -2311,17 +2316,15 @@ function saveState() {
 async function saveToSupabase() {
   if (!syncCode) return;
   try {
-    // Delete all rows for this sync_code first, then re-insert
-    // Avoids supabase-js v2 onConflict multi-column quoting bug (400 Bad Request)
-    const { error: delErr } = await sb.from('debt_cards').delete().eq('sync_code', syncCode);
-    if (delErr) throw delErr;
+    const headers = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/debt_cards?sync_code=eq.${encodeURIComponent(syncCode)}`, { method: 'DELETE', headers });
     if (state.cards.length === 0) { updateSyncStatus(); return; }
     const rows = state.cards.map(c => {
       if (!c._key) c._key = c.bank + '_' + (c._createdAt || (c._createdAt = Date.now()));
       return { sync_code: syncCode, card_key: c._key, bank: c.bank||'', amount: c.amount||0, due_date: c.dueDate||null, card_type: c.cardType||null, min_payment: c.minPayment||null, note: c.note||null, transactions: c.transactions||[] };
     });
-    const { error: insErr } = await sb.from('debt_cards').insert(rows);
-    if (insErr) throw insErr;
+    const insRes = await fetch(`${SB_URL}/rest/v1/debt_cards`, { method: 'POST', headers, body: JSON.stringify(rows) });
+    if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status);
     updateSyncStatus();
   } catch(e) { console.warn('Supabase save error:', e); }
 }
@@ -2331,18 +2334,12 @@ async function loadState() {
   if (local) { try { const p=JSON.parse(local); if(p.cards) state.cards=p.cards; } catch(e){} }
   if (!syncCode) { renderDashboard(); return; }
   try {
-    // Load rows thuộc user này
-    const {data, error} = await sb.from('debt_cards').select('*').eq('sync_code', syncCode);
-    if (!error && data && data.length) {
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const res = await fetch(`${SB_URL}/rest/v1/debt_cards?sync_code=eq.${encodeURIComponent(syncCode)}&select=*`, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
+    if (data && data.length) {
       state.cards = data.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
-    } else if (!data || data.length === 0) {
-      // Migrate rows cũ không có sync_code
-      const {data: old} = await sb.from('debt_cards').select('*').is('sync_code', null);
-      if (old && old.length > 0) {
-        await sb.from('debt_cards').update({ sync_code: syncCode }).is('sync_code', null);
-        state.cards = old.map(r => ({bank:r.bank,amount:r.amount,dueDate:r.due_date,cardType:r.card_type,minPayment:r.min_payment,note:r.note,transactions:r.transactions||[],_key:r.card_key,_style:getBankStyle(r.bank)}));
-        showToast('✓ Đã gắn dữ liệu cũ vào tài khoản', 'success');
-      }
     }
   } catch(e) { console.warn('Supabase load error:', e); }
   renderDashboard();
@@ -2726,31 +2723,16 @@ async function calLoadMonth() {
   if (!syncCode) return;
   calSetSync('spin');
   const from=calDk(calY,calM,1), to=calDk(calY,calM,new Date(calY,calM+1,0).getDate());
-  // Clear current month's data to avoid stale display on month change
-  const dim = new Date(calY,calM+1,0).getDate();
-  for (let d=1; d<=dim; d++) { delete calData[calDk(calY,calM,d)]; }
   try {
-    // 1. Load rows thuộc user này
-    const { data, error } = await sb
-      .from(CAL_TABLE).select('date,pnl,note')
-      .eq('sync_code', syncCode)
-      .gte('date', from).lte('date', to);
-    if (error) throw error;
-
-    // 2. Nếu chưa có data, thử migrate rows cũ (sync_code IS NULL) → gán user
-    if (!data || data.length === 0) {
-      const { data: old } = await sb.from(CAL_TABLE).select('date,pnl,note')
-        .is('sync_code', null).gte('date', from).lte('date', to);
-      if (old && old.length > 0) {
-        await sb.from(CAL_TABLE).update({ sync_code: syncCode })
-          .is('sync_code', null).gte('date', from).lte('date', to);
-        old.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
-        calSaveLocal();
-      }
-    } else {
-      data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
-      calSaveLocal();
-    }
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const url = `${SB_URL}/rest/v1/trading_calendar?sync_code=eq.${encodeURIComponent(syncCode)}&date=gte.${from}&date=lte.${to}&select=date,pnl,note`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
+    console.log('calLoadMonth rows:', data.length, JSON.stringify(data));
+    data.forEach(r => { calData[r.date] = {pnl: r.pnl, note: r.note||''}; });
+    console.log('calData after load:', JSON.stringify(calData));
+    calSaveLocal();
     calSetSync('ok');
   } catch(e) {
     console.warn('Calendar load error:', e?.message || e);
@@ -2762,42 +2744,55 @@ async function calSaveRecord(key, usdVal, note) {
   // Always save locally first
   calData[key] = {pnl: usdVal, note: note||''};
   calSaveLocal();
-  if (!syncCode) return true; // local-only save still counts as success
+  // Restore syncCode from localStorage if missing
+  if (!syncCode) syncCode = localStorage.getItem(SYNC_CODE_KEY) || '';
+  if (!syncCode) { showToast('⚠ Chưa có syncCode — chưa đăng nhập?', 'error'); return true; }
+  showToast('Sync: ' + syncCode.slice(0,8) + '...', '');
   try {
-    if (usdVal === null) {
-      // Delete record
-      await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
-    } else {
-      // Upsert — no delete+insert race condition
-      const { error } = await sb.from(CAL_TABLE).upsert({
-        sync_code: syncCode,
-        date: key,
-        pnl: +parseFloat(usdVal).toFixed(6),
-        note: note || ''
-      }, { onConflict: 'sync_code,date' });
-      if (error) throw error;
+    // Use fetch directly — Supabase JS client has timeout issues with this table
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Prefer': 'return=minimal'
+    };
+    // Delete
+    const delRes = await fetch(
+      `${SB_URL}/rest/v1/trading_calendar?sync_code=eq.${encodeURIComponent(syncCode)}&date=eq.${key}`,
+      { method: 'DELETE', headers }
+    );
+    if (!delRes.ok && delRes.status !== 404) throw new Error('Delete failed: ' + delRes.status);
+    // Insert
+    if (usdVal !== null) {
+      const insRes = await fetch(
+        `${SB_URL}/rest/v1/trading_calendar`,
+        { method: 'POST', headers, body: JSON.stringify({ sync_code: syncCode, date: key, pnl: +parseFloat(usdVal).toFixed(6), note: note||'' }) }
+      );
+      if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status + ' ' + await insRes.text());
     }
     return true;
   } catch(e) {
     const msg = e?.message || String(e);
-    showToast('⚠ Cloud lỗi (đã lưu local): ' + msg.slice(0,50), 'error');
+    showToast('⚠ ' + msg.slice(0, 60), 'error');
     console.warn('Calendar save error:', msg);
-    return true; // return true so modal closes and calendar re-renders
+    return true;
   }
 }
 
 async function calDelRecord(key) {
-  // Always delete locally first
   delete calData[key];
   calSaveLocal();
   if (!syncCode) return true;
   try {
-    const { error } = await sb.from(CAL_TABLE).delete().eq('sync_code', syncCode).eq('date', key);
-    if (error) throw error;
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    await fetch(
+      `${SB_URL}/rest/v1/trading_calendar?sync_code=eq.${encodeURIComponent(syncCode)}&date=eq.${key}`,
+      { method: 'DELETE', headers }
+    );
     return true;
   } catch(e) {
     console.warn('Calendar delete error:', e?.message || e);
-    return true; // local delete succeeded, close modal anyway
+    return true;
   }
 }
 
@@ -3137,34 +3132,14 @@ function tcSetSync(state, errMsg) {
 async function tcLoadYear() {
   if (!syncCode) return;
   tcSetSync('spin');
-  // Clear current year's data before loading to avoid stale data on year change
-  for (let m = 1; m <= 12; m++) {
-    delete tcData[`${tcYear}-${String(m).padStart(2,'0')}`];
-  }
   try {
-    // 1. Load rows thuộc user này
-    const { data, error } = await sb.from(TC_TABLE)
-      .select('month,thu,chi,note').eq('sync_code', syncCode)
-      .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`)
-      .order('month', { ascending: true });
-    if (error) throw error;
-
-    // 2. Nếu chưa có data, thử migrate rows cũ (sync_code IS NULL)
-    if (!data || data.length === 0) {
-      const { data: old } = await sb.from(TC_TABLE).select('month,thu,chi,note')
-        .is('sync_code', null)
-        .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`);
-      if (old && old.length > 0) {
-        await sb.from(TC_TABLE).update({ sync_code: syncCode })
-          .is('sync_code', null)
-          .gte('month', `${tcYear}-01`).lte('month', `${tcYear}-12`);
-        old.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
-        tcSaveLocal();
-      }
-    } else {
-      data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
-      tcSaveLocal();
-    }
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const url = `${SB_URL}/rest/v1/thu_chi?sync_code=eq.${encodeURIComponent(syncCode)}&month=gte.${tcYear}-01&month=lte.${tcYear}-12&select=month,thu,chi,note&order=month.asc`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
+    data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
+    tcSaveLocal();
     tcSetSync('ok');
   } catch(e) {
     const msg = e?.message || String(e);
@@ -3174,22 +3149,36 @@ async function tcLoadYear() {
 }
 
 async function tcSaveRecord(key, thu, chi, note) {
-  // Always save locally first
   tcData[key] = { thu, chi, note };
   tcSaveLocal();
   if (!syncCode) return true;
   try {
-    const { error } = await sb.from(TC_TABLE).upsert({
-      sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||''
-    }, { onConflict: 'sync_code,month' });
-    if (error) throw error;
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Prefer': 'return=minimal'
+    };
+    // Delete
+    const delRes = await fetch(
+      `${SB_URL}/rest/v1/thu_chi?sync_code=eq.${encodeURIComponent(syncCode)}&month=eq.${key}`,
+      { method: 'DELETE', headers }
+    );
+    if (!delRes.ok && delRes.status !== 404) throw new Error('Delete failed: ' + delRes.status);
+    // Insert
+    const insRes = await fetch(
+      `${SB_URL}/rest/v1/thu_chi`,
+      { method: 'POST', headers, body: JSON.stringify({ sync_code: syncCode, month: key, thu: +thu||0, chi: +chi||0, note: note||'' }) }
+    );
+    if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status + ' ' + await insRes.text());
     tcSetSync('ok');
     return true;
   } catch(e) {
     const msg = e?.message || String(e);
+    showToast('⚠ ' + msg.slice(0, 60), 'error');
     console.warn('ThuChi save error:', msg);
     tcSetSync('err', msg);
-    return true; // local save succeeded, close modal anyway
+    return true;
   }
 }
 
@@ -3653,14 +3642,11 @@ async function aaSaveSupabase() {
       value: aaState[a.key].value || 0,
       transactions: aaState[a.key].transactions || []
     }));
-    const { error: upsertErr } = await sb.from(AA_TABLE)
-      .upsert(rows, { onConflict: 'sync_code,asset_key' });
-    if (upsertErr) {
-      // Fallback: delete this user's rows then re-insert
-      await sb.from(AA_TABLE).delete().eq('sync_code', syncCode);
-      const { error: insErr } = await sb.from(AA_TABLE).insert(rows);
-      if (insErr) throw insErr;
-    }
+    // delete+insert via fetch directly
+    const headers = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Prefer': 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/asset_allocation?sync_code=eq.${encodeURIComponent(syncCode)}`, { method: 'DELETE', headers });
+    const insRes = await fetch(`${SB_URL}/rest/v1/asset_allocation`, { method: 'POST', headers, body: JSON.stringify(rows) });
+    if (!insRes.ok) throw new Error('Insert failed: ' + insRes.status);
     aaSetSync('ok');
   } catch(e) {
     console.warn('AA Supabase save error:', e);
@@ -3672,26 +3658,16 @@ async function aaLoadSupabase() {
   if (!syncCode) return;
   try {
     aaSetSync('spin');
-    const { data, error } = await sb.from(AA_TABLE).select('*').eq('sync_code', syncCode);
-    if (error) throw error;
+    const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+    const res = await fetch(`${SB_URL}/rest/v1/asset_allocation?sync_code=eq.${encodeURIComponent(syncCode)}&select=*`, { headers });
+    if (!res.ok) throw new Error('Load failed: ' + res.status);
+    const data = await res.json();
     if (data && data.length) {
       data.forEach(r => {
         if (aaState[r.asset_key] !== undefined)
           aaState[r.asset_key] = { value: r.value||0, transactions: r.transactions||[] };
       });
       aaSaveLocal();
-    } else {
-      // Migrate rows cũ không có sync_code
-      const { data: old } = await sb.from(AA_TABLE).select('*').is('sync_code', null);
-      if (old && old.length) {
-        await sb.from(AA_TABLE).update({ sync_code: syncCode }).is('sync_code', null);
-        old.forEach(r => {
-          if (aaState[r.asset_key] !== undefined)
-            aaState[r.asset_key] = { value: r.value||0, transactions: r.transactions||[] };
-        });
-        aaSaveLocal();
-        showToast('✓ Đã gắn dữ liệu tài sản vào tài khoản', 'success');
-      }
     }
     aaSetSync('ok');
   } catch(e) {
