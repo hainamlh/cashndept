@@ -3141,9 +3141,9 @@ async function tcLoadYear() {
     if (!res.ok) throw new Error('Load failed: ' + res.status);
     const data = await res.json();
     console.log('tcLoadYear', tcYear, 'rows:', data.length, JSON.stringify(data));
-    // Clear this year's 12 months from local cache before merging,
-    // so mobile devices don't keep showing stale/missing data from before first sync
-    for (let m = 0; m < 12; m++) delete tcData[tcKey(tcYear, m)];
+    // Safe merge only — never delete local data first.
+    // Past sync failures may mean the server doesn't have everything local has,
+    // so wiping local before merging can destroy data that was never actually synced.
     data.forEach(r => { tcData[r.month] = { thu: r.thu||0, chi: r.chi||0, note: r.note||'' }; });
     tcSaveLocal();
     tcSetSync('ok');
@@ -3181,10 +3181,10 @@ async function tcSaveRecord(key, thu, chi, note) {
     return true;
   } catch(e) {
     const msg = e?.message || String(e);
-    showToast('⚠ ' + msg.slice(0, 60), 'error');
+    showToast('⚠ Chưa lưu lên cloud: ' + msg.slice(0, 60), 'error');
     console.warn('ThuChi save error:', msg);
     tcSetSync('err', msg);
-    return true;
+    return false;
   }
 }
 
