@@ -1815,12 +1815,22 @@ body {
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
           <span id="tcYearNet" class="cal-pill zero" style="font-size:14px;padding:3px 12px;line-height:1.4">—</span>
+        <button onclick="tcExportData()" title="Export dữ liệu Thu Chi (copy JSON)" style="background:none;border:1px solid var(--border,#444);border-radius:6px;color:var(--text-muted);font-size:13px;padding:3px 8px;cursor:pointer">📤</button>
         <div class="dot" id="tcSyncDot"></div>
       </div>
     </div>
     <!-- 4 Quarter blocks, each with 3 month cards + 1 quarter summary -->
     <div class="tc-wrap" id="tcBody"></div>
   </div><!-- /view-thuchi -->
+
+  <script>
+  // ── Temporary export helper: dump nmoney_thuchi_data from localStorage
+  // as a copyable prompt (works on iOS Safari without DevTools/Mac needed) ──
+  function tcExportData() {
+    const raw = localStorage.getItem('nmoney_thuchi_data') || '{}';
+    window.prompt('Chạm vào ô bên dưới, chọn tất cả (Select All) rồi Copy, sau đó gửi lại cho tôi:', raw);
+  }
+  </script>
 
   <!-- Thu Chi Modal -->
   <div class="cal-modal-bg" id="tcModalBg">
@@ -2235,8 +2245,8 @@ function fmtKCompact(usd) {
 }
 function fmtVND(n) { if(!n&&n!==0)return'—'; return new Intl.NumberFormat('vi-VN').format(Math.round(n))+' ₫'; }
 function fmtVND_M(n) { if(!n&&n!==0)return'—'; const m=n/1_000_000; return (m%1===0?m.toFixed(0):m.toFixed(1))+' tr₫'; }
-function fmtUSD_full(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; if(isMobile()) return fmtKCompact(usd); return '$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.round(usd)); }
-function fmtUSD_K(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; if(Math.abs(usd)>=1e6)return'$'+(usd/1e6).toFixed(isMobile()?1:2).replace(/\.?0+$/,'')+'M'; if(isMobile()) return fmtKCompact(usd); return'$'+new Intl.NumberFormat('en-US').format(Math.round(usd)); }
+function fmtUSD_full(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; if(isMobile()) return fmtKCompact(usd); const sign=usd<0?'-':''; const abs=Math.abs(usd); return sign+'$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.round(abs)); }
+function fmtUSD_K(n) { if(!n&&n!==0)return'—'; const usd=n/usdRate; const sign=usd<0?'-':''; const abs=Math.abs(usd); if(abs>=1e6)return sign+'$'+(abs/1e6).toFixed(isMobile()?1:2).replace(/\.?0+$/,'')+'M'; if(isMobile()) return fmtKCompact(usd); return sign+'$'+new Intl.NumberFormat('en-US').format(Math.round(abs)); }
 function fmt(n)  { return currency==='USD'?fmtUSD_full(n):fmtVND(n); }
 function fmtM(n) { return currency==='USD'?fmtUSD_K(n):fmtVND_M(n); }
 function fmtBoth(n) { if(currency==='USD')return fmtUSD_full(n)+' ('+fmtVND_M(n)+')'; return fmtVND_M(n)+' ('+fmtUSD_K(n)+')'; }
@@ -3213,8 +3223,10 @@ function tcFmt(valMillion) {
   if (currency === 'USD') {
     const usd = (n * 1_000_000) / usdRate;
     if (isMobile()) return fmtKCompact(usd);
-    if (Math.abs(usd) >= 1e6) return '$' + (usd/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
-    return '$' + new Intl.NumberFormat('en-US').format(Math.round(usd));
+    const sign = usd < 0 ? '-' : '';
+    const abs = Math.abs(usd);
+    if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
+    return sign + '$' + new Intl.NumberFormat('en-US').format(Math.round(abs));
   }
   // VNĐ display
   if (Math.abs(n) >= 1000) return (n/1000).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
@@ -3234,9 +3246,11 @@ function tcFmtQ(valMillion) {
   const n = parseFloat(valMillion);
   if (currency === 'USD') {
     const usd = (n * 1_000_000) / usdRate;
-    if (Math.abs(usd) >= 1e6) return '$' + (usd/1e6).toFixed(1) + 'M';
-    if (Math.abs(usd) >= 1000) return '$' + (usd/1000).toFixed(1) + 'K';
-    return '$' + Math.round(usd);
+    const sign = usd < 0 ? '-' : '';
+    const abs = Math.abs(usd);
+    if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M';
+    if (abs >= 1000) return sign + '$' + (abs/1000).toFixed(1) + 'K';
+    return sign + '$' + Math.round(abs);
   }
   if (Math.abs(n) >= 1000) return (n/1000).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
   if (Math.abs(n) >= 1)    return n % 1 === 0 ? n.toFixed(0) + ' tr' : n.toFixed(1) + ' tr';
